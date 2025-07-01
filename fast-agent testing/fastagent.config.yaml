@@ -10,7 +10,9 @@
 # If not specified, defaults to "haiku". 
 # Can be overriden with a command line switch --model=<model>, or within the Agent constructor.
 
-default_model: haiku
+#default_model: haiku
+#default_model: generic.llama3.2:latest
+default_model: generic.qwen3:1.7b
 
 # Logging and Console Configuration:
 logger:
@@ -28,13 +30,12 @@ logger:
     show_tools: true
     # Truncate long tool responses on the console 
     truncate_tools: true
+generic:
+  api_key: "ollama" # Default for Ollama, change as needed
+  base_url: "http://192.168.1.12:11434/v1" # Default for Ollama
 
-# MCP Servers
 mcp:
-    servers:
-        fetch:
-            command: "uvx"
-            args: ["mcp-server-fetch"]
-        filesystem:
-            command: "npx"
-            args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+  servers:
+    wikijs:
+        transport: "http"
+        url: "http://inari.localdomain:8004/mcp/mcp"
