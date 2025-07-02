@@ -29,21 +29,25 @@ fi
 echo
 echo "🔧 Configuration Check..."
 
-# Check for configuration files
-config_dir="config/fastagent"
-if [ ! -d "$config_dir" ]; then
-    echo "❌ Configuration directory not found: $config_dir"
+# Check for configuration files (now in root directory for fast-agent auto-discovery)
+if [ ! -f "fastagent.config.yaml" ]; then
+    echo "❌ Configuration file not found: fastagent.config.yaml"
+    echo "   This file should be in the project root directory"
     exit 1
 fi
 
-if [ ! -f "$config_dir/fastagent.config.yaml" ]; then
-    echo "❌ Configuration file not found: $config_dir/fastagent.config.yaml"
+if [ ! -f "system_prompt.txt" ]; then
+    echo "❌ System prompt file not found: system_prompt.txt"
+    echo "   This file should be in the project root directory"
     exit 1
 fi
 
-if [ ! -f "$config_dir/system_prompt.txt" ]; then
-    echo "❌ System prompt file not found: $config_dir/system_prompt.txt"
-    exit 1
+if [ ! -f "fastagent.secrets.yaml" ]; then
+    echo "⚠️  Warning: Secrets file not found: fastagent.secrets.yaml"
+    echo "   Copy .env.example to fastagent.secrets.yaml and add your API keys"
+    echo "   Or ensure you're using environment variables or local models"
+else
+    echo "✅ Secrets file found: fastagent.secrets.yaml"
 fi
 
 echo "✅ Configuration files found"
@@ -67,16 +71,22 @@ fi
 # Run tests
 echo
 echo "🧪 Running tests..."
-if timeout 30 uv run python tests/test_basic.py 2>/dev/null | grep -q "All tests passed"; then
+if timeout 60 uv run pytest tests/ -q --tb=no 2>/dev/null | grep -q "passed"; then
     echo "✅ All tests passed"
 else
-    echo "⚠️  Tests completed (some warnings may be expected for Streamlit in test mode)"
+    echo "⚠️  Tests completed (check for any issues with: uv run pytest tests/ -v)"
 fi
 
 echo
 echo "🚀 Starting Mary2ish..."
 echo "   The application will be available at: http://localhost:8501"
 echo "   To view the embedding demo, open: demo_embed.html in your browser"
+echo
+echo "   Features:"
+echo "   • Smart thinking response processing (auto-hides <think> tags)"
+echo "   • Collapsible reasoning display for power users"
+echo "   • Dynamic iframe sizing for embedding"
+echo "   • Clean, minimal UI optimized for embedding"
 echo
 echo "   Press Ctrl+C to stop the application"
 echo

@@ -261,8 +261,8 @@ class ChatApp:
         """, unsafe_allow_html=True)
         
         # Title and subtitle
-        st.title("AI Chat Assistant")
-        st.caption("Powered by fast-agent.ai")
+        st.title("Mary")
+    #    st.caption("Powered by fast-agent.ai")
         
         # Display chat messages
         chat_container = st.container()
@@ -308,7 +308,7 @@ class ChatApp:
                     
                     # Add assistant response to session state with separated thinking
                     message_data = {
-                        "role": "assistant", 
+                        "role": "Assistant", 
                         "content": clean_response
                     }
                     if thinking_content:
@@ -351,7 +351,7 @@ def main():
     """Main application function."""
     # Configure Streamlit page
     st.set_page_config(
-        page_title="AI Chat Assistant",
+        page_title="Mary",
         page_icon="🤖",
         layout="wide",
         initial_sidebar_state="collapsed"
