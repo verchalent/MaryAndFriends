@@ -8,9 +8,10 @@ This application integrates with fast-agent.ai for LLM orchestration.
 import asyncio
 import logging
 import os
+import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import streamlit as st
 import yaml
@@ -24,11 +25,60 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuration paths
-CONFIG_DIR = Path(__file__).parent.parent / "config" / "fastagent"
-SYSTEM_PROMPT_FILE = CONFIG_DIR / "system_prompt.txt"
-CONFIG_FILE = CONFIG_DIR / "fastagent.config.yaml"
-SECRETS_FILE = CONFIG_DIR / "fastagent.secrets.yaml"
+# Configuration paths - now in root directory for fast-agent auto-discovery
+CONFIG_FILE = Path(__file__).parent.parent / "fastagent.config.yaml"
+SYSTEM_PROMPT_FILE = Path(__file__).parent.parent / "system_prompt.txt"
+SECRETS_FILE = Path(__file__).parent.parent / "fastagent.secrets.yaml"
+
+
+def process_thinking_response(response: str) -> Tuple[str, Optional[str]]:
+    """
+    Process LLM response to separate thinking from actual response.
+    
+    Args:
+        response: Raw LLM response that may contain <think> tags
+        
+    Returns:
+        Tuple of (clean_response, thinking_content)
+        - clean_response: Response with thinking tags removed
+        - thinking_content: Content from within thinking tags, or None if no thinking
+    """
+    # Pattern to match <think>...</think> tags (case insensitive, multiline)
+    think_pattern = r'<think>(.*?)</think>'
+    
+    # Find all thinking sections
+    thinking_matches = re.findall(think_pattern, response, re.DOTALL | re.IGNORECASE)
+    
+    # Remove thinking sections from response
+    clean_response = re.sub(think_pattern, '', response, flags=re.DOTALL | re.IGNORECASE)
+    clean_response = clean_response.strip()
+    
+    # Combine all thinking content if any exists
+    thinking_content = None
+    if thinking_matches:
+        thinking_content = '\n\n'.join(match.strip() for match in thinking_matches)
+    
+    return clean_response, thinking_content
+
+
+def render_response_with_thinking(content: str, thinking: Optional[str] = None):
+    """
+    Render an assistant response with optional collapsible thinking section.
+    
+    Args:
+        content: The main response content
+        thinking: Optional thinking content to display in collapsible section
+    """
+    if thinking:
+        # Display thinking in collapsible expander
+        with st.expander("🧠 Show AI Reasoning", expanded=False):
+            st.markdown(f"*{thinking}*")
+    
+    # Display main content
+    st.markdown(
+        f'<div class="assistant-message"><strong>Assistant:</strong> {content}</div>',
+        unsafe_allow_html=True
+    )
 
 
 class ChatApp:
@@ -98,11 +148,10 @@ class ChatApp:
             if self.is_initialized:
                 return True
             
-            # Create FastAgent instance pointing to the parent config directory
-            # fast-agent expects the config files to be in fastagent/ subdirectory
+            # Create FastAgent instance - let it auto-discover config files
+            # fast-agent automatically searches for config files in current working directory
             self.fast_agent = FastAgent(
                 name="Mary2ish Chat Agent",
-                config_path=str(CONFIG_DIR.parent),  # Points to the config/ directory
                 parse_cli_args=False  # Don't parse CLI args in Streamlit
             )
             
@@ -208,10 +257,16 @@ class ChatApp:
                         unsafe_allow_html=True
                     )
                 else:
-                    st.markdown(
-                        f'<div class="assistant-message"><strong>Assistant:</strong> {message["content"]}</div>',
-                        unsafe_allow_html=True
-                    )
+                    # Get thinking content if it was stored separately
+                    thinking_content = message.get("thinking")
+                    response_content = message["content"]
+                    
+                    # If no stored thinking but content has think tags, process it
+                    if not thinking_content and "<think>" in response_content.lower():
+                        response_content, thinking_content = process_thinking_response(response_content)
+                    
+                    # Render response with thinking content (if any)
+                    render_response_with_thinking(response_content, thinking_content)
         
         # Chat input
         if prompt := st.chat_input("Type your message here..."):
@@ -229,10 +284,20 @@ class ChatApp:
             with st.spinner("Thinking..."):
                 try:
                     # Send message to agent
-                    response = asyncio.run(self.send_message(prompt))
+                    raw_response = asyncio.run(self.send_message(prompt))
                     
-                    # Add assistant response to session state
-                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    # Process thinking content from response
+                    clean_response, thinking_content = process_thinking_response(raw_response)
+                    
+                    # Add assistant response to session state with separated thinking
+                    message_data = {
+                        "role": "assistant", 
+                        "content": clean_response
+                    }
+                    if thinking_content:
+                        message_data["thinking"] = thinking_content
+                    
+                    st.session_state.messages.append(message_data)
                     
                     # Rerun to display the new message
                     st.rerun()
