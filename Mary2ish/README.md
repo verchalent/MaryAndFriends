@@ -37,24 +37,58 @@ The application will be available at `http://localhost:8501`
 ```text
 ├── app/                    # Main application code
 │   └── main.py            # Streamlit application entry point
-├── config/                # Configuration directory
-│   └── fastagent/         # fast-agent.ai configuration files
-│       ├── system_prompt.txt
-│       ├── fastagent.config.yaml
-│       └── fastagent.secrets.yaml
 ├── tests/                 # Unit tests
+├── docs/                  # Project documentation
+├── fastagent.config.yaml  # fast-agent.ai configuration
+├── fastagent.secrets.yaml # API keys and secrets (create from .env.example)
+├── system_prompt.txt      # System prompt for the LLM
 ├── PLANNING.md            # Project architecture and design decisions
 ├── TASK.md               # Development phases and task breakdown
+├── demo_embed.html       # Example iframe embedding
+├── start.sh              # Application startup script
 └── README.md             # This file
 ```
 
 ## Configuration
 
-The application loads configuration from the `config/fastagent/` directory:
+The application loads configuration from the root directory (for fast-agent auto-discovery):
 
 - `system_prompt.txt`: System-level instructions for the LLM
 - `fastagent.config.yaml`: Agent configuration including LLM provider settings
 - `fastagent.secrets.yaml`: Sensitive information like API keys
+
+### Setting Up API Keys
+
+1. Copy `.env.example` to create your secrets file:
+
+   ```bash
+   cp .env.example fastagent.secrets.yaml
+   ```
+
+2. Edit `fastagent.secrets.yaml` and add your actual API keys:
+
+   ```yaml
+   # Anthropic Configuration (for Claude models)
+   anthropic:
+     api_key: "your_actual_anthropic_api_key_here"
+   
+   # OpenAI Configuration  
+   openai:
+     api_key: "your_actual_openai_api_key_here"
+   ```
+
+## Features
+
+### Smart Thinking Response Handling
+
+The application intelligently processes LLM responses that contain reasoning information:
+
+- **Automatic Detection**: Detects `<think>` and `</think>` tags in responses
+- **Clean Display**: Shows only the main response content to users
+- **Collapsible Reasoning**: Provides a "🧠 Show AI Reasoning" expander for users who want to see the thinking process
+- **Seamless Experience**: Maintains chat flow while keeping reasoning optional
+
+This feature works with any reasoning-capable model (like o1, o3-mini, or models configured to show their reasoning process).
 
 ## Development Phases
 

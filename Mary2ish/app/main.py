@@ -51,6 +51,9 @@ def process_thinking_response(response: str) -> Tuple[str, Optional[str]]:
     
     # Remove thinking sections from response
     clean_response = re.sub(think_pattern, '', response, flags=re.DOTALL | re.IGNORECASE)
+    
+    # Clean up extra whitespace and normalize line breaks
+    clean_response = re.sub(r'\n\s*\n\s*\n', '\n\n', clean_response)  # Replace multiple newlines with double
     clean_response = clean_response.strip()
     
     # Combine all thinking content if any exists
@@ -233,6 +236,20 @@ class ChatApp:
             border-radius: 10px;
             margin: 5px 0;
             margin-right: 20px;
+        }
+        
+        /* Thinking expander styling */
+        .stExpander {
+            margin: 5px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        
+        .stExpander > div > div > div {
+            background-color: #f8f9fa;
+            padding: 10px;
+            font-style: italic;
+            color: #666;
         }
         
         /* Make the app responsive */

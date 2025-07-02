@@ -44,26 +44,21 @@ def test_config_file_structure():
     """Test that configuration files exist and have correct structure."""
     # Get the project root directory (parent of tests directory)
     project_root = Path(__file__).parent.parent
-    config_dir = project_root / "config" / "fastagent"
     
-    print(f"Looking for config directory at: {config_dir}")
-    print(f"Config directory exists: {config_dir.exists()}")
+    print(f"Looking for config files in project root: {project_root}")
     
-    # Check that config directory exists
-    assert config_dir.exists(), f"Config directory not found at {config_dir}"
-    
-    # Check main config file
-    config_file = config_dir / "fastagent.config.yaml"
+    # Check main config file (now in root directory for fast-agent auto-discovery)
+    config_file = project_root / "fastagent.config.yaml"
     print(f"Config file exists: {config_file.exists()}")
     assert config_file.exists(), f"Config file not found at {config_file}"
     
     # Check system prompt file
-    system_prompt_file = config_dir / "system_prompt.txt"
+    system_prompt_file = project_root / "system_prompt.txt"
     print(f"System prompt file exists: {system_prompt_file.exists()}")
     assert system_prompt_file.exists(), f"System prompt file not found at {system_prompt_file}"
     
-    # Check secrets example file
-    secrets_file = config_dir / "fastagent.secrets.yaml"
+    # Check secrets file
+    secrets_file = project_root / "fastagent.secrets.yaml"
     print(f"Secrets file exists: {secrets_file.exists()}")
     assert secrets_file.exists(), f"Secrets file not found at {secrets_file}"
 
