@@ -50,7 +50,20 @@
   * Added: July 2, 2025 - User requested ability to customize page title, agent display name, and header text
   * **COMPLETED:** July 2, 2025 - Implemented UI configuration file, enhanced styling with clear visual separation between speakers and content
 
-**Phase 1 Complete:** [x]
+**Phase 1 Complete:** [x] - Completed July 2, 2025
+
+### **Discovered Issues Before Phase 2:**
+
+#### **Tasks:**
+
+* [ ] **1.10. MCP Server Integration:**
+  * [ ] Update agent initialization to include any MCP servers defined in fastagent.config.yaml
+  * [ ] Ensure MCP servers are properly connected at agent launch time
+  * [ ] Test connectivity to configured MCP servers (e.g., wikijs server at inari.localdomain:8004)
+  * [ ] Handle MCP connection errors gracefully with appropriate logging
+  * Added: July 2, 2025 - Issue: Agent config includes MCP servers but they are not being initialized during agent startup
+
+**Discovered Issues Complete:** [ ]
 
 ### **Phase 2: UI Refinements & Embeddability**
 
