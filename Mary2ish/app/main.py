@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 CONFIG_FILE = Path(__file__).parent.parent / "fastagent.config.yaml"
 SYSTEM_PROMPT_FILE = Path(__file__).parent.parent / "system_prompt.txt"
 SECRETS_FILE = Path(__file__).parent.parent / "fastagent.secrets.yaml"
+UI_CONFIG_FILE = Path(__file__).parent.parent / "ui.config.yaml"
 
 
 def process_thinking_response(response: str) -> Tuple[str, Optional[str]]:
@@ -64,13 +65,14 @@ def process_thinking_response(response: str) -> Tuple[str, Optional[str]]:
     return clean_response, thinking_content
 
 
-def render_response_with_thinking(content: str, thinking: Optional[str] = None):
+def render_response_with_thinking(content: str, thinking: Optional[str] = None, agent_name: str = "Assistant"):
     """
     Render an assistant response with optional collapsible thinking section.
     
     Args:
         content: The main response content
         thinking: Optional thinking content to display in collapsible section
+        agent_name: Display name for the assistant (configurable)
     """
     if thinking:
         # Display thinking in collapsible expander
@@ -79,7 +81,7 @@ def render_response_with_thinking(content: str, thinking: Optional[str] = None):
     
     # Display main content
     st.markdown(
-        f'<div class="assistant-message"><strong>Assistant:</strong> {content}</div>',
+        f'<div class="assistant-message"><strong>{agent_name}:</strong> {content}</div>',
         unsafe_allow_html=True
     )
 
@@ -92,6 +94,7 @@ class ChatApp:
         self.fast_agent: Optional[FastAgent] = None
         self.agent_app = None
         self.config: Dict[str, Any] = {}
+        self.ui_config: Dict[str, Any] = {}
         self.system_prompt: str = ""
         self.is_initialized = False
         
@@ -119,6 +122,31 @@ class ChatApp:
                 self.config = {
                     'default_model': 'haiku',
                     'execution_engine': 'asyncio'
+                }
+            
+            # Load UI configuration
+            if UI_CONFIG_FILE.exists():
+                with open(UI_CONFIG_FILE, 'r') as f:
+                    self.ui_config = yaml.safe_load(f) or {}
+                logger.info(f"Loaded UI configuration from {UI_CONFIG_FILE}")
+            else:
+                logger.warning(f"UI configuration file not found: {UI_CONFIG_FILE}")
+                # Default UI configuration
+                self.ui_config = {
+                    'page': {
+                        'title': 'Mary',
+                        'header': 'Mary',
+                        'icon': '🤖'
+                    },
+                    'chat': {
+                        'agent_display_name': 'Mary',
+                        'user_display_name': 'You',
+                        'input_placeholder': 'Type your message here...'
+                    },
+                    'branding': {
+                        'footer_caption': '',
+                        'show_powered_by': False
+                    }
                 }
             
             # Load system prompt if it exists
@@ -261,8 +289,21 @@ class ChatApp:
         """, unsafe_allow_html=True)
         
         # Title and subtitle
-        st.title("Mary")
-    #    st.caption("Powered by fast-agent.ai")
+        page_header = self.ui_config.get('page', {}).get('header', 'Mary')
+        st.title(page_header)
+        
+        # Optional footer caption
+        footer_caption = self.ui_config.get('branding', {}).get('footer_caption', '')
+        show_powered_by = self.ui_config.get('branding', {}).get('show_powered_by', False)
+        
+        if show_powered_by:
+            st.caption("Powered by fast-agent.ai")
+        elif footer_caption:
+            st.caption(footer_caption)
+        
+        # Get display names from UI config
+        user_display_name = self.ui_config.get('chat', {}).get('user_display_name', 'You')
+        agent_display_name = self.ui_config.get('chat', {}).get('agent_display_name', 'Mary')
         
         # Display chat messages
         chat_container = st.container()
@@ -270,7 +311,7 @@ class ChatApp:
             for message in st.session_state.messages:
                 if message["role"] == "user":
                     st.markdown(
-                        f'<div class="user-message"><strong>You:</strong> {message["content"]}</div>',
+                        f'<div class="user-message"><strong>{user_display_name}:</strong> {message["content"]}</div>',
                         unsafe_allow_html=True
                     )
                 else:
@@ -283,17 +324,18 @@ class ChatApp:
                         response_content, thinking_content = process_thinking_response(response_content)
                     
                     # Render response with thinking content (if any)
-                    render_response_with_thinking(response_content, thinking_content)
+                    render_response_with_thinking(response_content, thinking_content, agent_display_name)
         
         # Chat input
-        if prompt := st.chat_input("Type your message here..."):
+        input_placeholder = self.ui_config.get('chat', {}).get('input_placeholder', 'Type your message here...')
+        if prompt := st.chat_input(input_placeholder):
             # Add user message to session state
             st.session_state.messages.append({"role": "user", "content": prompt})
             
             # Display user message immediately
             with chat_container:
                 st.markdown(
-                    f'<div class="user-message"><strong>You:</strong> {prompt}</div>',
+                    f'<div class="user-message"><strong>{user_display_name}:</strong> {prompt}</div>',
                     unsafe_allow_html=True
                 )
             
@@ -349,21 +391,24 @@ class ChatApp:
 
 def main():
     """Main application function."""
-    # Configure Streamlit page
-    st.set_page_config(
-        page_title="Mary",
-        page_icon="🤖",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
-    
-    # Create chat app instance
+    # Create chat app instance and load configuration first
     app = ChatApp()
     
     # Load configuration
     if not app.load_configuration():
         st.error("Failed to load configuration. Please check your configuration files.")
         st.stop()
+    
+    # Configure Streamlit page with values from UI config
+    page_title = app.ui_config.get('page', {}).get('title', 'Mary')
+    page_icon = app.ui_config.get('page', {}).get('icon', '🤖')
+    
+    st.set_page_config(
+        page_title=page_title,
+        page_icon=page_icon,
+        layout="wide",
+        initial_sidebar_state="collapsed"
+    )
     
     # Display chat interface
     app.display_chat_interface()
@@ -376,6 +421,11 @@ def main():
             st.success("✅ Configuration file found")
         else:
             st.error("❌ Configuration file missing")
+        
+        if UI_CONFIG_FILE.exists():
+            st.success("✅ UI configuration file found")
+        else:
+            st.warning("⚠️ UI configuration file missing")
         
         if SYSTEM_PROMPT_FILE.exists():
             st.success("✅ System prompt file found")
@@ -391,6 +441,10 @@ def main():
         st.subheader("Current Configuration")
         config_display = {k: v for k, v in app.config.items() if k != 'secrets'}
         st.json(config_display)
+        
+        # Display UI configuration
+        st.subheader("UI Configuration")
+        st.json(app.ui_config)
 
 
 if __name__ == "__main__":
