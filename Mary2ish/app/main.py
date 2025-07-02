@@ -79,9 +79,12 @@ def render_response_with_thinking(content: str, thinking: Optional[str] = None, 
         with st.expander("🧠 Show AI Reasoning", expanded=False):
             st.markdown(f"*{thinking}*")
     
-    # Display main content
+    # Display main content with improved styling structure
     st.markdown(
-        f'<div class="assistant-message"><strong>{agent_name}:</strong> {content}</div>',
+        f'''<div class="assistant-message">
+            <div class="speaker-name assistant-speaker">{agent_name}</div>
+            <div class="message-content">{content}</div>
+        </div>''',
         unsafe_allow_html=True
     )
 
@@ -252,18 +255,53 @@ class ChatApp:
         /* Chat message styling */
         .user-message {
             background-color: #e3f2fd;
-            padding: 10px;
+            padding: 15px;
             border-radius: 10px;
-            margin: 5px 0;
+            margin: 10px 0;
             margin-left: 20px;
+            border-left: 4px solid #1976d2;
         }
         
         .assistant-message {
             background-color: #f5f5f5;
-            padding: 10px;
+            padding: 15px;
             border-radius: 10px;
-            margin: 5px 0;
+            margin: 10px 0;
             margin-right: 20px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        /* Speaker name styling */
+        .speaker-name {
+            font-weight: 700;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            padding-bottom: 4px;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+            display: block;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .user-speaker {
+            color: #1565c0;
+            border-bottom-color: #1976d2;
+        }
+        
+        .assistant-speaker {
+            color: #2e7d32;
+            border-bottom-color: #4caf50;
+        }
+        
+        /* Message content styling */
+        .message-content {
+            font-size: 1.05em;
+            line-height: 1.7;
+            color: #1a1a1a;
+            margin-top: 8px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-weight: 400;
         }
         
         /* Thinking expander styling */
@@ -311,7 +349,10 @@ class ChatApp:
             for message in st.session_state.messages:
                 if message["role"] == "user":
                     st.markdown(
-                        f'<div class="user-message"><strong>{user_display_name}:</strong> {message["content"]}</div>',
+                        f'''<div class="user-message">
+                            <div class="speaker-name user-speaker">{user_display_name}</div>
+                            <div class="message-content">{message["content"]}</div>
+                        </div>''',
                         unsafe_allow_html=True
                     )
                 else:
@@ -335,7 +376,10 @@ class ChatApp:
             # Display user message immediately
             with chat_container:
                 st.markdown(
-                    f'<div class="user-message"><strong>{user_display_name}:</strong> {prompt}</div>',
+                    f'''<div class="user-message">
+                        <div class="speaker-name user-speaker">{user_display_name}</div>
+                        <div class="message-content">{prompt}</div>
+                    </div>''',
                     unsafe_allow_html=True
                 )
             
