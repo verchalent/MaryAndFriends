@@ -38,4 +38,4 @@ mcp:
   servers:
     wikijs:
         transport: "http"
-        url: "http://inari.localdomain:8004/mcp/mcp"
+        url: "http://inari.localdomain:8004/mcp/"
