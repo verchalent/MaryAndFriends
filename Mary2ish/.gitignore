@@ -65,6 +65,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+fastagent.jsonl
 
 # Streamlit
 .streamlit/
