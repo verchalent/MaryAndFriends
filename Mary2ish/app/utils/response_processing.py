@@ -6,7 +6,45 @@ Functions for processing agent responses to separate different content types
 """
 
 import re
+import html
 from typing import Optional, Tuple
+
+
+def process_markdown_to_html(text: str) -> str:
+    """
+    Convert basic Markdown formatting to HTML for safe display in Streamlit.
+    
+    This function handles the most common Markdown elements:
+    - **bold** -> <strong>bold</strong>
+    - *italic* -> <em>italic</em>
+    - `code` -> <code>code</code>
+    - [link](url) -> <a href="url">link</a>
+    
+    Args:
+        text: Raw text with Markdown formatting
+        
+    Returns:
+        HTML-formatted text safe for use in st.markdown with unsafe_allow_html=True
+    """
+    # First escape any existing HTML to prevent injection
+    text = html.escape(text)
+    
+    # Process bold text **text** -> <strong>text</strong>
+    text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
+    
+    # Process italic text *text* -> <em>text</em> (but not already processed bold)
+    text = re.sub(r'(?<!\*)\*([^*]+?)\*(?!\*)', r'<em>\1</em>', text)
+    
+    # Process inline code `text` -> <code>text</code>
+    text = re.sub(r'`([^`]+?)`', r'<code>\1</code>', text)
+    
+    # Process links [text](url) -> <a href="url" target="_blank">text</a>
+    text = re.sub(r'\[([^\]]+?)\]\(([^)]+?)\)', r'<a href="\2" target="_blank">\1</a>', text)
+    
+    # Convert newlines to <br> for proper display
+    text = text.replace('\n', '<br>')
+    
+    return text
 
 
 def process_thinking_response(response: str) -> Tuple[str, Optional[str]]:
