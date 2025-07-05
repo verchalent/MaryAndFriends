@@ -195,6 +195,15 @@
 
 **Phase 4 Complete:** [ ]
 
+## **Discovered During Work**
+
+### **Maintenance & Code Quality**
+
+* [x] **Root Folder Cleanup:**
+  * [x] Remove unnecessary files from root directory: `main_old_root.py`, `debug_agent.py`, `test_comprehensive_processing.py`, `test_response_quality.py`
+  * [x] Ensure all tests are properly organized in the `tests/` directory
+  * **COMPLETED:** July 5, 2025 - Cleaned up root folder by removing legacy and misplaced files
+
 ## **Conclusion & Next Steps**
 
 Upon completion of all phases and their respective testing and UAT sign-offs, we will prepare for the official release of the Embeddable AI Chat & Web GUI.
