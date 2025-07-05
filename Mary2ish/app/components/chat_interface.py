@@ -40,22 +40,24 @@ def render_response_with_thinking(
         mcp_data: Optional MCP data to show in expandable section
         agent_name: Name of the agent for display purposes
     """
-    # Display main response content
-    with st.chat_message("assistant"):
-        st.markdown(f"**{agent_name}:**")
-        st.markdown(content)
-        
-        # Show thinking process if available
-        if thinking:
-            with st.expander("🧠 Agent Thinking Process", expanded=False):
-                st.markdown("*This shows the agent's internal reasoning process:*")
-                st.markdown(thinking)
-        
-        # Show MCP server data if available
-        if mcp_data:
-            with st.expander("🔧 Server Data", expanded=False):
-                st.markdown("*Raw data from MCP servers (for debugging):*")
-                st.code(mcp_data, language="text")
+    # Display thinking in collapsible expander first (if available)
+    if thinking:
+        with st.expander("🧠 Show AI Reasoning", expanded=False):
+            st.markdown(f"*{thinking}*")
+    
+    # Display MCP data in collapsible expander (for power users/debugging)
+    if mcp_data:
+        with st.expander("🔧 Show Server Data", expanded=False):
+            st.code(mcp_data, language="text")
+    
+    # Display main content with our custom styling (not using st.chat_message)
+    st.markdown(
+        f'''<div class="assistant-message">
+            <div class="speaker-name assistant-speaker">{agent_name}</div>
+            <div class="message-content">{content}</div>
+        </div>''',
+        unsafe_allow_html=True
+    )
 
 
 class ChatApp:
@@ -259,62 +261,75 @@ class ChatApp:
         ui_config = self.config_manager.load_ui_config()
         
         # Display page header if configured
-        page_header = ui_config.get("page_header")
+        page_header = ui_config.get("page", {}).get("header")
         if page_header:
             st.markdown(f"## {page_header}")
         
         # Display existing messages
         for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                if message["role"] == "user":
-                    st.markdown(f"**You:** {message['content']}")
-                else:
-                    # For assistant messages, check if we have thinking/mcp data
-                    thinking = message.get("thinking")
-                    mcp_data = message.get("mcp_data")
-                    agent_name = ui_config.get("agent_display_name", "Assistant")
-                    
-                    if thinking or mcp_data:
-                        render_response_with_thinking(
-                            message["content"],
-                            thinking,
-                            mcp_data,
-                            agent_name
-                        )
-                    else:
-                        st.markdown(f"**{agent_name}:** {message['content']}")
+            if message["role"] == "user":
+                # Get user display name from config
+                user_display_name = ui_config.get("chat", {}).get("user_display_name", "You")
+                # Display user message with custom styling
+                st.markdown(
+                    f'''<div class="user-message">
+                        <div class="speaker-name user-speaker">{user_display_name}</div>
+                        <div class="message-content">{message["content"]}</div>
+                    </div>''',
+                    unsafe_allow_html=True
+                )
+            else:
+                # For assistant messages, check if we have thinking/mcp data
+                thinking = message.get("thinking")
+                mcp_data = message.get("mcp_data")
+                agent_name = ui_config.get("chat", {}).get("agent_display_name", "Assistant")
+                
+                # Use our custom render function which applies proper styling
+                render_response_with_thinking(
+                    message["content"],
+                    thinking,
+                    mcp_data,
+                    agent_name
+                )
         
         # Chat input
-        if prompt := st.chat_input("Type your message here..."):
-            # Display user message
-            with st.chat_message("user"):
-                st.markdown(f"**You:** {prompt}")
-            
-            # Add user message to history
+        input_placeholder = ui_config.get("chat", {}).get("input_placeholder", "Type your message here...")
+        if prompt := st.chat_input(input_placeholder):
+            # Add user message to session state
             st.session_state.messages.append({"role": "user", "content": prompt})
             
-            # Get agent response
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    response = asyncio.run(self.send_message(prompt))
-                
-                # Process the response to separate thinking and MCP data
-                clean_response, thinking, mcp_data = process_agent_response(response)
-                
-                # Get agent display name
-                agent_name = ui_config.get("agent_display_name", "Assistant")
-                
-                # Display the response with optional sections
-                render_response_with_thinking(clean_response, thinking, mcp_data, agent_name)
-                
-                # Add to message history with all components
-                message_entry = {
-                    "role": "assistant",
-                    "content": clean_response
-                }
-                if thinking:
-                    message_entry["thinking"] = thinking
-                if mcp_data:
-                    message_entry["mcp_data"] = mcp_data
+            # Show thinking indicator
+            with st.spinner("Thinking..."):
+                try:
+                    # Send message to agent
+                    raw_response = asyncio.run(self.send_message(prompt))
                     
-                st.session_state.messages.append(message_entry)
+                    # Process all content types from response
+                    clean_response, thinking, mcp_data = process_agent_response(raw_response)
+                    
+                    # Add assistant response to session state with separated content
+                    message_data = {
+                        "role": "assistant", 
+                        "content": clean_response
+                    }
+                    if thinking:
+                        message_data["thinking"] = thinking
+                    if mcp_data:
+                        message_data["mcp_data"] = mcp_data
+                    
+                    st.session_state.messages.append(message_data)
+                    
+                    # Rerun to display the new messages with our custom styling
+                    st.rerun()
+                    
+                except Exception as e:
+                    logger.error(f"Error sending message: {e}")
+                    display_agent_error(e)
+                    
+                    # Add error message to chat history for context
+                    error_message = {
+                        "role": "assistant", 
+                        "content": "I apologize, but I encountered an error while processing your message. Please try again."
+                    }
+                    st.session_state.messages.append(error_message)
+                    st.rerun()
