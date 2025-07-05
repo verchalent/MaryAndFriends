@@ -204,6 +204,16 @@
   * [x] Ensure all tests are properly organized in the `tests/` directory
   * **COMPLETED:** July 5, 2025 - Cleaned up root folder by removing legacy and misplaced files
 
+* [x] **Knowledge Facts Integration:**
+  * [x] Create system for loading private knowledge facts from `knowledge_facts.txt`
+  * [x] Integrate knowledge facts into enhanced system prompt
+  * [x] Ensure knowledge facts file is ignored by git for security
+  * [x] Create example template file `knowledge_facts.txt.example`
+  * [x] Add comprehensive tests for knowledge facts loading
+  * [x] Update documentation with setup instructions
+  * **COMPLETED:** July 5, 2025 - Knowledge facts feature implemented and tested
+  * **FILES:** `app/config/config_manager.py`, `tests/test_knowledge_facts.py`, `knowledge_facts.txt.example`
+
 * [ ] **Text Formatting Inconsistency Fix:**
   * [ ] Investigate inconsistent Markdown rendering in chat responses (bold text showing as `**text**`)
   * [ ] Analyze Streamlit's Markdown processing in chat messages

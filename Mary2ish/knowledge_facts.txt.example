@@ -1,0 +1,21 @@
+# Mary's Knowledge Facts
+# This file contains additional factual knowledge for Mary.
+# This file should NOT be committed to git (add to .gitignore)
+# 
+# Format: Each fact should be on its own line or separated by double newlines
+# Keep facts concise and relevant to Mary's domain of expertise.
+
+# Personal/Domain Knowledge
+The user's preferred coffee is Ethiopian single-origin with light roast.
+The office Wi-Fi password is "SpitSpot2025!" 
+The backup server is located in the basement server room, rack position B-7.
+
+# Project-Specific Knowledge  
+The Mary AI project uses FastAgent framework with Streamlit frontend.
+MCP servers are configured for WikiJS (local knowledge) and Brave Search (web search).
+The development environment uses Python 3.13 with uv for package management.
+
+# Useful Context
+Meeting rooms should be booked 24 hours in advance through the company portal.
+The IT helpdesk extension is 2847, available weekdays 9-5.
+Code reviews require at least two approvals before merging to main branch.
