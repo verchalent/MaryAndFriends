@@ -79,9 +79,20 @@ class ConfigManager:
             
         # Default UI configuration
         defaults = {
-            "page_title": "Mary 2.0ish",
-            "agent_display_name": "Assistant",
-            "page_header": None
+            "page": {
+                "title": "Mary 2.0ish",
+                "header": "Mary",
+                "icon": "🤖"
+            },
+            "chat": {
+                "agent_display_name": "Assistant",
+                "user_display_name": "You",
+                "input_placeholder": "Type your message here..."
+            },
+            "branding": {
+                "footer_caption": "",
+                "show_powered_by": False
+            }
         }
         
         try:

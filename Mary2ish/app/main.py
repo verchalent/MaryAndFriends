@@ -31,8 +31,8 @@ def configure_streamlit_page(config_manager: ConfigManager) -> None:
     try:
         ui_config = config_manager.load_ui_config()
         
-        page_title = ui_config.get('page_title', 'Mary 2.0ish')
-        page_icon = '🤖'
+        page_title = ui_config.get('page', {}).get('title', 'Mary 2.0ish')
+        page_icon = ui_config.get('page', {}).get('icon', '🤖')
         
         st.set_page_config(
             page_title=page_title,
