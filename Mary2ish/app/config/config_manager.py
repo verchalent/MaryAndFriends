@@ -30,11 +30,13 @@ class ConfigManager:
         self.system_prompt_file = base_path / "system_prompt.txt"
         self.secrets_file = base_path / "fastagent.secrets.yaml"
         self.ui_config_file = base_path / "ui.config.yaml"
+        self.knowledge_facts_file = base_path / "knowledge_facts.txt"
         
         # Cache for loaded configurations
         self._agent_config: Optional[Dict[str, Any]] = None
         self._ui_config: Optional[Dict[str, Any]] = None
         self._system_prompt: Optional[str] = None
+        self._knowledge_facts: Optional[str] = None
         
     def load_agent_config(self) -> Dict[str, Any]:
         """
@@ -145,6 +147,71 @@ class ConfigManager:
             logger.error(f"Error loading system prompt: {e}")
             raise
             
+    def load_knowledge_facts(self) -> Optional[str]:
+        """
+        Load and return additional knowledge facts for Mary.
+        
+        This loads private knowledge facts that should not be committed to git.
+        If the file doesn't exist, returns None (not an error - this is optional).
+        
+        Returns:
+            String containing knowledge facts, or None if file doesn't exist
+            
+        Raises:
+            Exception: If file exists but cannot be read
+        """
+        if self._knowledge_facts is not None:
+            return self._knowledge_facts
+            
+        try:
+            if not self.knowledge_facts_file.exists():
+                logger.info(f"Knowledge facts file not found (optional): {self.knowledge_facts_file}")
+                self._knowledge_facts = None
+                return None
+                
+            with open(self.knowledge_facts_file, 'r') as f:
+                content = f.read().strip()
+                
+            # Only cache and return if there's actual content
+            if content:
+                self._knowledge_facts = content
+                logger.info(f"Loaded knowledge facts from {self.knowledge_facts_file}")
+                return self._knowledge_facts
+            else:
+                logger.info(f"Knowledge facts file is empty: {self.knowledge_facts_file}")
+                self._knowledge_facts = None
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error loading knowledge facts: {e}")
+            raise
+            
+    def get_enhanced_system_prompt(self) -> str:
+        """
+        Get the system prompt enhanced with additional knowledge facts.
+        
+        Combines the base system prompt with any available knowledge facts.
+        
+        Returns:
+            Enhanced system prompt string
+        """
+        base_prompt = self.load_system_prompt()
+        knowledge_facts = self.load_knowledge_facts()
+        
+        if knowledge_facts:
+            enhanced_prompt = f"""{base_prompt}
+
+## Additional Knowledge Context
+
+The following are specific facts and context that may be relevant to your interactions:
+
+{knowledge_facts}
+
+Use this knowledge appropriately when it's relevant to the conversation, but don't feel obligated to mention it unless pertinent."""
+            return enhanced_prompt
+        else:
+            return base_prompt
+            
     def get_config_paths(self) -> Dict[str, Path]:
         """
         Get all configuration file paths.
@@ -156,7 +223,8 @@ class ConfigManager:
             "agent_config": self.config_file,
             "system_prompt": self.system_prompt_file,
             "secrets": self.secrets_file,
-            "ui_config": self.ui_config_file
+            "ui_config": self.ui_config_file,
+            "knowledge_facts": self.knowledge_facts_file
         }
         
     def clear_cache(self) -> None:
@@ -164,4 +232,5 @@ class ConfigManager:
         self._agent_config = None
         self._ui_config = None
         self._system_prompt = None
+        self._knowledge_facts = None
         logger.info("Cleared configuration cache")

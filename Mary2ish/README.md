@@ -56,6 +56,7 @@ The application loads configuration from the root directory (for fast-agent auto
 - `system_prompt.txt`: System-level instructions for the LLM
 - `fastagent.config.yaml`: Agent configuration including LLM provider settings
 - `fastagent.secrets.yaml`: Sensitive information like API keys
+- `knowledge_facts.txt`: Optional private knowledge facts (see below)
 
 ### Setting Up API Keys
 
@@ -76,6 +77,33 @@ The application loads configuration from the root directory (for fast-agent auto
    openai:
      api_key: "your_actual_openai_api_key_here"
    ```
+
+### Adding Private Knowledge Facts
+
+Mary can be enhanced with additional factual knowledge that is kept private and not committed to git:
+
+1. Create a `knowledge_facts.txt` file in the root directory:
+
+   ```bash
+   cp knowledge_facts.txt.example knowledge_facts.txt
+   ```
+
+2. Edit `knowledge_facts.txt` with your specific knowledge:
+
+   ```text
+   # Personal/Domain Knowledge
+   The user's preferred coffee is Ethiopian single-origin with light roast.
+   The backup server is located in the basement server room, rack position B-7.
+   
+   # Project-Specific Knowledge  
+   The Mary AI project uses FastAgent framework with Streamlit frontend.
+   Code reviews require at least two approvals before merging to main branch.
+   ```
+
+3. The knowledge will be automatically integrated into Mary's system prompt
+4. The file is ignored by git to keep your private information secure
+
+**Note**: Knowledge facts are optional - if the file doesn't exist, Mary will work normally with just the base system prompt.
 
 ## Features
 

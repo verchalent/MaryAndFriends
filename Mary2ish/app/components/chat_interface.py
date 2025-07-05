@@ -89,6 +89,7 @@ class ChatApp:
             self.config_manager.load_agent_config()
             self.config_manager.load_ui_config()
             self.config_manager.load_system_prompt()
+            self.config_manager.load_knowledge_facts()  # Optional - won't fail if missing
             
             logger.info("All configurations loaded successfully")
             return True
@@ -114,7 +115,7 @@ class ChatApp:
                 return False
                 
             config = self.config_manager.load_agent_config()
-            system_prompt = self.config_manager.load_system_prompt()
+            system_prompt = self.config_manager.get_enhanced_system_prompt()
             
             # Create FastAgent instance - let it auto-discover config files
             self.fast_agent = FastAgent(
