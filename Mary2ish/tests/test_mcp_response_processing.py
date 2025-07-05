@@ -11,7 +11,7 @@ import os
 # Add parent directory to path to import app module
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from app.main import process_thinking_response, process_mcp_response, process_agent_response
+from app.utils.response_processing import process_thinking_response, process_mcp_response, process_agent_response
 
 
 class TestMCPResponseProcessing:

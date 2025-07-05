@@ -9,7 +9,7 @@ from pathlib import Path
 # Add app directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "app"))
 
-from main import process_thinking_response
+from app.utils.response_processing import process_thinking_response
 
 
 class TestThinkingResponseProcessing:
