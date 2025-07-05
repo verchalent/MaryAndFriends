@@ -607,7 +607,7 @@ class ChatApp:
             
         except Exception as e:
             logger.error(f"Error loading configuration: {e}")
-            st.error(f"Error loading configuration: {e}")
+            self.display_error_message(e, "loading application configuration")
             return False
     
     async def initialize_agent(self) -> bool:
@@ -688,7 +688,10 @@ class ChatApp:
                         self.is_initialized = True
                         
                         logger.info("Fast-agent initialized successfully in fallback mode (no MCP servers)")
-                        st.warning("⚠️ Some advanced features may be unavailable due to server connectivity issues.")
+                        self.display_warning_message(
+                            "Some advanced features may be unavailable due to server connectivity issues.",
+                            "The application is running in fallback mode without MCP servers."
+                        )
                         return True
                         
                     except Exception as fallback_error:
@@ -699,7 +702,7 @@ class ChatApp:
             
         except Exception as e:
             logger.error(f"Error initializing agent: {e}")
-            st.error(f"Error initializing agent: {e}")
+            self.display_error_message(e, "initializing the AI agent")
             return False
     
     async def send_message(self, message: str) -> str:
@@ -759,85 +762,217 @@ class ChatApp:
     
     def display_chat_interface(self):
         """Display the main chat interface."""
-        # Custom CSS for embedding
+        # Enhanced CSS for embedding with comprehensive iframe-friendly styling
         st.markdown("""
         <style>
-        /* Hide Streamlit elements for embedding */
-        .stDeployButton {display: none;}
-        .stDecoration {display: none;}
-        footer {display: none;}
-        header {display: none;}
+        /* Force CSS refresh - Version 2 */
+        /* === EMBEDDING COMPATIBILITY === */
+        /* Hide only non-essential Streamlit artifacts for clean embedding */
+        .stApp > header {display: none;}
+        .stDeployButton {display: none !important;}
+        .stDecoration {display: none !important;}
+        footer {display: none !important;}
+        #MainMenu {display: none;}
+        .stToolbar {display: none !important;}
+        .st-emotion-cache-z5fcl4 {padding-top: 1rem !important;}
+        .st-emotion-cache-18ni7ap {padding: 0 !important;}
+        .st-emotion-cache-6qob1r {padding: 1rem !important;}
         
-        /* Chat message styling */
-        .user-message {
-            background-color: #e3f2fd;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 10px 0;
-            margin-left: 20px;
-            border-left: 4px solid #1976d2;
+        /* === RESPONSIVE LAYOUT === */
+        .stApp {
+            background: transparent;
+            padding: 0;
+            margin: 0;
         }
         
-        .assistant-message {
-            background-color: #f5f5f5;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 10px 0;
-            margin-right: 20px;
-            border-left: 4px solid #4caf50;
-        }
-        
-        /* Speaker name styling */
-        .speaker-name {
-            font-weight: 700;
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            padding-bottom: 4px;
-            border-bottom: 2px solid rgba(0,0,0,0.1);
-            display: block;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .user-speaker {
-            color: #1565c0;
-            border-bottom-color: #1976d2;
-        }
-        
-        .assistant-speaker {
-            color: #2e7d32;
-            border-bottom-color: #4caf50;
-        }
-        
-        /* Message content styling */
-        .message-content {
-            font-size: 1.05em;
-            line-height: 1.7;
-            color: #1a1a1a;
-            margin-top: 8px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            font-weight: 400;
-        }
-        
-        /* Thinking expander styling */
-        .stExpander {
-            margin: 5px 0;
-            border: 1px solid #e0e0e0;
-            border-radius: 5px;
-        }
-        
-        .stExpander > div > div > div {
-            background-color: #f8f9fa;
-            padding: 10px;
-            font-style: italic;
-            color: #666;
-        }
-        
-        /* Make the app responsive */
         .main .block-container {
             padding-top: 1rem;
             padding-bottom: 1rem;
+            max-width: 100%;
+        }
+        
+        /* === CHAT MESSAGE STYLING === */
+        .user-message {
+            background: linear-gradient(135deg, #afcde9 20%, #c8dae8 100%) !important;
+            padding: 16px 20px;
+            border-radius: 16px 16px 4px 16px;
+            margin: 12px 0 12px 40px;
+            border-left: 4px solid #5a9fd4;
+            box-shadow: 0 2px 8px rgba(90, 159, 212, 0.15);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
+            color: #2c3e50;
+        }
+        
+        .assistant-message {
+            background: linear-gradient(135deg, #e6b3ff 20%, #d8e1da 100%) !important;
+            padding: 16px 20px;
+            border-radius: 16px 16px 16px 4px;
+            margin: 12px 40px 12px 0;
+            border-left: 4px solid #7cb342;
+            box-shadow: 0 2px 8px rgba(124, 179, 66, 0.15);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
+            color: #2c3e50;
+        }
+        
+        /* === SPEAKER NAME STYLING === */
+        .speaker-name {
+            font-weight: 700;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid rgba(0,0,0,0.08);
+            display: block;
+        }
+        
+        .user-speaker {
+            color: #4a6fa5;
+        }
+        
+        .assistant-speaker {
+            color: #5a8a3a;
+        }
+        
+        /* === MESSAGE CONTENT STYLING === */
+        .message-content {
+            font-size: 1em;
+            color: #34495e;
+            margin: 0;
+        }
+        
+        .message-content p {
+            margin-bottom: 0.8em;
+        }
+        
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* === INPUT AREA STYLING === */
+        .stTextInput > div > div > input {
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
+            padding: 12px 16px;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .stTextInput > div > div > input:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+        }
+        
+        /* === BUTTON STYLING === */
+        .stButton > button {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
+        }
+        
+        .stButton > button:hover {
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+        }
+        
+        /* === EXPANDER STYLING === */
+        .streamlit-expanderHeader {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #666;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 8px 0 4px 0;
+        }
+        
+        .streamlit-expanderContent {
+            background: #f8f9fa;
+            border-radius: 0 0 8px 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        
+        /* === SPINNER STYLING === */
+        .stSpinner > div {
+            border-top-color: #1976d2 !important;
+        }
+        
+        /* === ERROR/WARNING STYLING === */
+        .stAlert {
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+        }
+        
+        /* === RESPONSIVE DESIGN === */
+        @media (max-width: 768px) {
+            .user-message, .assistant-message {
+                margin-left: 20px;
+                margin-right: 20px;
+                padding: 14px 16px;
+            }
+            
+            .speaker-name {
+                font-size: 0.75em;
+                margin-bottom: 8px;
+            }
+            
+            .message-content {
+                font-size: 0.95em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .user-message, .assistant-message {
+                margin-left: 12px;
+                margin-right: 12px;
+                padding: 12px 14px;
+                border-radius: 12px;
+            }
+            
+            .main .block-container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
+        
+        /* === IFRAME SPECIFIC OPTIMIZATIONS === */
+        html, body {
+            overflow-x: hidden;
+        }
+        
+        .stApp {
+            overflow-x: hidden;
+        }
+        
+        /* Ensure smooth scrolling within iframe */
+        .main {
+            scroll-behavior: smooth;
+        }
+        
+        /* Hide scrollbars but maintain functionality */
+        .main::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        
+        /* Custom loading indicator for iframe */
+        .iframe-loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -860,45 +995,49 @@ class ChatApp:
         agent_display_name = self.ui_config.get('chat', {}).get('agent_display_name', 'Mary')
         
         # Display chat messages
-        chat_container = st.container()
-        with chat_container:
-            for message in st.session_state.messages:
-                if message["role"] == "user":
-                    st.markdown(
-                        f'''<div class="user-message">
-                            <div class="speaker-name user-speaker">{user_display_name}</div>
-                            <div class="message-content">{message["content"]}</div>
-                        </div>''',
-                        unsafe_allow_html=True
-                    )
-                else:
-                    # Get stored content
-                    thinking_content = message.get("thinking")
-                    mcp_data = message.get("mcp_data") 
-                    response_content = message["content"]
-                    
-                    # If no stored processed content, process the raw content
-                    if not thinking_content and not mcp_data and ("<think>" in response_content.lower() or any(char in response_content for char in ['{', '[', ':'])):
-                        response_content, thinking_content, mcp_data = process_agent_response(response_content)
-                    
-                    # Render response with all content types
-                    render_response_with_thinking(response_content, thinking_content, mcp_data, agent_display_name)
+        for message in st.session_state.messages:
+            if message["role"] == "user":
+                st.markdown(
+                    f'''<div class="user-message">
+                        <div class="speaker-name user-speaker">{user_display_name}</div>
+                        <div class="message-content">{message["content"]}</div>
+                    </div>''',
+                    unsafe_allow_html=True
+                )
+            else:
+                # Get stored content
+                thinking_content = message.get("thinking")
+                mcp_data = message.get("mcp_data") 
+                response_content = message["content"]
+                
+                # If no stored processed content, process the raw content
+                if not thinking_content and not mcp_data and ("<think>" in response_content.lower() or any(char in response_content for char in ['{', '[', ':'])):
+                    response_content, thinking_content, mcp_data = process_agent_response(response_content)
+                
+                # Display thinking in collapsible expander
+                if thinking_content:
+                    with st.expander("🧠 Show AI Reasoning", expanded=False):
+                        st.markdown(f"*{thinking_content}*")
+                
+                # Display MCP data in collapsible expander (for power users/debugging)
+                if mcp_data:
+                    with st.expander("🔧 Show Server Data", expanded=False):
+                        st.code(mcp_data, language="text")
+                
+                # Display main assistant message
+                st.markdown(
+                    f'''<div class="assistant-message">
+                        <div class="speaker-name assistant-speaker">{agent_display_name}</div>
+                        <div class="message-content">{response_content}</div>
+                    </div>''',
+                    unsafe_allow_html=True
+                )
         
         # Chat input
         input_placeholder = self.ui_config.get('chat', {}).get('input_placeholder', 'Type your message here...')
         if prompt := st.chat_input(input_placeholder):
             # Add user message to session state
             st.session_state.messages.append({"role": "user", "content": prompt})
-            
-            # Display user message immediately
-            with chat_container:
-                st.markdown(
-                    f'''<div class="user-message">
-                        <div class="speaker-name user-speaker">{user_display_name}</div>
-                        <div class="message-content">{prompt}</div>
-                    </div>''',
-                    unsafe_allow_html=True
-                )
             
             # Show thinking indicator
             with st.spinner("Thinking..."):
@@ -925,30 +1064,273 @@ class ChatApp:
                     st.rerun()
                     
                 except Exception as e:
-                    error_msg = f"Error: {e}"
-                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                    logger.error(f"Error sending message: {e}")
+                    self.display_error_message(e, "processing your message")
+                    
+                    # Add error message to chat history for context
+                    error_message = {
+                        "role": "Assistant", 
+                        "content": "I apologize, but I encountered an error while processing your message. Please try again."
+                    }
+                    st.session_state.messages.append(error_message)
                     st.rerun()
         
-        # Dynamic iframe sizing JavaScript
+        # Enhanced dynamic iframe sizing JavaScript
         st.markdown("""
         <script>
-        function sendHeightToParent() {
-            const height = document.body.scrollHeight;
-            if (window.parent && window.parent.postMessage) {
-                window.parent.postMessage({
-                    height: height,
-                    source: 'streamlit-chat-app'
-                }, '*');
+        (function() {
+            let lastHeight = 0;
+            let resizeObserver = null;
+            let isInIframe = false;
+            
+            // Check if we're running in an iframe
+            function checkIframeContext() {
+                try {
+                    isInIframe = window.self !== window.top;
+                } catch (e) {
+                    isInIframe = true;
+                }
+                return isInIframe;
             }
-        }
-        
-        // Send height on load and resize
-        window.addEventListener('load', sendHeightToParent);
-        window.addEventListener('resize', sendHeightToParent);
-        
-        // Send height periodically to catch content changes
-        setInterval(sendHeightToParent, 1000);
+            
+            // Calculate and send height to parent
+            function sendHeightToParent() {
+                if (!checkIframeContext()) return;
+                
+                // Multiple height calculation methods for accuracy
+                const bodyHeight = document.body.scrollHeight;
+                const documentHeight = document.documentElement.scrollHeight;
+                const appHeight = document.querySelector('.stApp')?.scrollHeight || 0;
+                const mainHeight = document.querySelector('.main')?.scrollHeight || 0;
+                
+                // Use the maximum height found
+                const height = Math.max(bodyHeight, documentHeight, appHeight, mainHeight);
+                
+                // Only send if height has changed significantly (avoid spam)
+                if (Math.abs(height - lastHeight) > 10) {
+                    lastHeight = height;
+                    
+                    if (window.parent && window.parent.postMessage) {
+                        window.parent.postMessage({
+                            type: 'iframe-resize',
+                            height: height,
+                            width: document.body.scrollWidth,
+                            source: 'streamlit-chat-app',
+                            timestamp: Date.now()
+                        }, '*');
+                    }
+                }
+            }
+            
+            // Enhanced debounced height sender
+            function debouncedSendHeight() {
+                clearTimeout(window.heightTimeout);
+                window.heightTimeout = setTimeout(sendHeightToParent, 100);
+            }
+            
+            // Initialize height monitoring
+            function initializeHeightMonitoring() {
+                // Send initial height
+                setTimeout(sendHeightToParent, 100);
+                
+                // Set up event listeners
+                window.addEventListener('load', sendHeightToParent);
+                window.addEventListener('resize', debouncedSendHeight);
+                window.addEventListener('orientationchange', debouncedSendHeight);
+                
+                // Monitor DOM changes with ResizeObserver (modern browsers)
+                if (window.ResizeObserver) {
+                    resizeObserver = new ResizeObserver(debouncedSendHeight);
+                    
+                    // Observe the main app container
+                    const appElement = document.querySelector('.stApp');
+                    if (appElement) {
+                        resizeObserver.observe(appElement);
+                    }
+                    
+                    // Also observe the main content area
+                    const mainElement = document.querySelector('.main');
+                    if (mainElement) {
+                        resizeObserver.observe(mainElement);
+                    }
+                }
+                
+                // Fallback: periodic height checks (for older browsers)
+                setInterval(sendHeightToParent, 2000);
+                
+                // Monitor for new content (Streamlit reruns)
+                const observer = new MutationObserver(debouncedSendHeight);
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true,
+                    attributes: false
+                });
+            }
+            
+            // Wait for DOM to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeHeightMonitoring);
+            } else {
+                initializeHeightMonitoring();
+            }
+            
+            // Send ready signal to parent
+            function sendReadySignal() {
+                if (checkIframeContext() && window.parent && window.parent.postMessage) {
+                    window.parent.postMessage({
+                        type: 'iframe-ready',
+                        source: 'streamlit-chat-app',
+                        timestamp: Date.now()
+                    }, '*');
+                }
+            }
+            
+            // Send ready signal after a short delay
+            setTimeout(sendReadySignal, 500);
+            
+        })();
         </script>
+        """, unsafe_allow_html=True)
+    
+    def display_error_message(self, error: Exception, context: str = ""):
+        """
+        Display user-friendly error messages with appropriate styling.
+        
+        Args:
+            error: The exception that occurred
+            context: Additional context about when/where the error occurred
+        """
+        error_type = type(error).__name__
+        error_msg = str(error)
+        
+        # Categorize errors for better user messaging
+        if "connection" in error_msg.lower() or "timeout" in error_msg.lower():
+            icon = "🔌"
+            title = "Connection Issue"
+            message = "There seems to be a connectivity problem. Please check your internet connection and try again."
+            technical_details = f"{error_type}: {error_msg}"
+        elif "api" in error_msg.lower() or "unauthorized" in error_msg.lower():
+            icon = "🔑"
+            title = "API Error"
+            message = "There's an issue with the AI service. This might be a temporary problem or a configuration issue."
+            technical_details = f"{error_type}: {error_msg}"
+        elif "config" in error_msg.lower() or "file not found" in error_msg.lower():
+            icon = "⚙️"
+            title = "Configuration Error"
+            message = "There's a problem with the application configuration. Please contact your administrator."
+            technical_details = f"{error_type}: {error_msg}"
+        elif "rate limit" in error_msg.lower() or "quota" in error_msg.lower():
+            icon = "⏱️"
+            title = "Service Limit Reached"
+            message = "The AI service is temporarily unavailable due to usage limits. Please try again in a few minutes."
+            technical_details = f"{error_type}: {error_msg}"
+        else:
+            icon = "⚠️"
+            title = "Unexpected Error"
+            message = "Something unexpected happened. We're working to resolve this issue."
+            technical_details = f"{error_type}: {error_msg}"
+        
+        # Display the error with appropriate styling
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border: 1px solid #e57373;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(229, 115, 115, 0.2);
+        ">
+            <div style="
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #c62828;
+                font-size: 1.1em;
+            ">
+                <span style="margin-right: 8px; font-size: 1.2em;">{icon}</span>
+                {title}
+            </div>
+            <div style="
+                color: #d32f2f;
+                line-height: 1.5;
+                margin-bottom: 12px;
+            ">
+                {message}
+            </div>
+            {f'<div style="color: #666; font-size: 0.9em; font-style: italic;">Context: {context}</div>' if context else ''}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Show technical details in an expander for debugging
+        with st.expander("🔧 Technical Details", expanded=False):
+            st.code(technical_details, language="text")
+    
+    def display_warning_message(self, message: str, details: str = ""):
+        """
+        Display warning messages with appropriate styling.
+        
+        Args:
+            message: The warning message to display
+            details: Optional additional details
+        """
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border: 1px solid #ffb74d;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(255, 183, 77, 0.2);
+        ">
+            <div style="
+                display: flex;
+                align-items: center;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #ef6c00;
+                font-size: 1.1em;
+            ">
+                <span style="margin-right: 8px; font-size: 1.2em;">⚠️</span>
+                Warning
+            </div>
+            <div style="
+                color: #f57c00;
+                line-height: 1.5;
+            ">
+                {message}
+            </div>
+            {f'<div style="color: #666; font-size: 0.9em; font-style: italic; margin-top: 8px;">{details}</div>' if details else ''}
+        </div>
+        """, unsafe_allow_html=True)
+    
+    def display_success_message(self, message: str):
+        """
+        Display success messages with appropriate styling.
+        
+        Args:
+            message: The success message to display
+        """
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            border: 1px solid #81c784;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(129, 199, 132, 0.2);
+        ">
+            <div style="
+                display: flex;
+                align-items: center;
+                font-weight: 600;
+                color: #2e7d32;
+                font-size: 1.1em;
+            ">
+                <span style="margin-right: 8px; font-size: 1.2em;">✅</span>
+                {message}
+            </div>
+        </div>
         """, unsafe_allow_html=True)
 
 
