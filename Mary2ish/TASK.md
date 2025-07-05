@@ -92,6 +92,19 @@
   * [ ] Add sandbox attribute to the iframe in parent\_page.html with appropriate permissions.  
 * [ ] **2.4. Error Message Display:**  
   * [ ] Implement UI elements to display user-friendly error messages if fast-agent.ai encounters an issue (e.g., LLM API error, config loading error).
+* [ ] **2.5. Code Refactoring & Modularization:**
+  * [x] Extract CSS and styling to `app/styles/chat_styles.py`
+  * [x] Extract response processing functions to `app/utils/response_processing.py`
+  * [x] Create configuration manager in `app/config/config_manager.py`
+  * [x] Create error display utilities in `app/utils/error_display.py`
+  * [x] Refactor ChatApp class to `app/components/chat_interface.py`
+  * [x] Refactor main.py to be a lean orchestration file (under 130 lines)
+  * [x] Create proper entry point (`main.py` in project root)
+  * [x] Update start.sh script to use new entry point
+  * [x] Test refactored application runs successfully with Streamlit
+  * [x] Create documentation of refactoring process and new structure
+  * [ ] Update tests to cover new module structure (partially broken after refactor)
+  * [ ] Full functional testing of refactored app
 
 #### **Testing & User Acceptance (Phase 2):**
 

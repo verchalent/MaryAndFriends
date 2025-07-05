@@ -15,7 +15,8 @@ import os
 # Add the parent directory to sys.path to import the app
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.main import ChatApp, process_agent_response
+from app.components.chat_interface import ChatApp
+from app.utils.response_processing import process_agent_response
 
 
 class TestUIEnhancements:

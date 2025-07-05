@@ -92,4 +92,4 @@ echo "   Press Ctrl+C to stop the application"
 echo
 
 # Start the application
-exec uv run streamlit run app/main.py --server.headless true --server.port 8501
+exec uv run streamlit run main.py --server.headless true --server.port 8501
