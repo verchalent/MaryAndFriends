@@ -204,6 +204,15 @@
   * [x] Ensure all tests are properly organized in the `tests/` directory
   * **COMPLETED:** July 5, 2025 - Cleaned up root folder by removing legacy and misplaced files
 
+* [ ] **Text Formatting Inconsistency Fix:**
+  * [ ] Investigate inconsistent Markdown rendering in chat responses (bold text showing as `**text**`)
+  * [ ] Analyze Streamlit's Markdown processing in chat messages
+  * [ ] Fix chat display logic to ensure consistent Markdown rendering
+  * [ ] Test formatting with various Markdown elements (bold, italic, lists)
+  * [ ] Create comprehensive tests for text formatting consistency
+  * **ADDED:** July 5, 2025 - User reported inconsistent text formatting in AI responses
+  * **INVESTIGATION DOC:** `docs/TEXT_FORMATTING_INVESTIGATION.md`
+
 ## **Conclusion & Next Steps**
 
 Upon completion of all phases and their respective testing and UAT sign-offs, we will prepare for the official release of the Embeddable AI Chat & Web GUI.
