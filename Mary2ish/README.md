@@ -23,7 +23,12 @@ git clone <repository-url>
 cd Mary2ish
 
 # Copy example configurations to create your real configs
-cp -r config_examples/ config/
+mkdir -p config/
+cp config_examples/fastagent.config.yaml config/
+cp config_examples/fastagent.secrets.yaml.example config/fastagent.secrets.yaml
+cp config_examples/system_prompt.txt config/
+cp config_examples/ui.config.yaml config/
+cp config_examples/knowledge_facts.txt.example config/knowledge_facts.txt
 
 # Edit config files with your settings
 edit config/fastagent.secrets.yaml  # Add your API keys
@@ -91,7 +96,7 @@ Mary2ish/
 
 1. **Copy the example secrets file:**
    ```bash
-   cp config_examples/fastagent.secrets.yaml config/fastagent.secrets.yaml
+   cp config_examples/fastagent.secrets.yaml.example config/fastagent.secrets.yaml
    ```
 
 2. **Add your actual API keys:**
@@ -163,23 +168,26 @@ Add private knowledge that gets automatically merged into the AI's system prompt
 
 ```bash
 # Build the container
-docker-compose build mary2ish
+docker compose build mary2ish
 
 # Run in production mode
-docker-compose up -d mary2ish
+docker compose up -d mary2ish
 
 # Check status
-docker-compose ps
-docker-compose logs mary2ish
+docker compose ps
+docker compose logs mary2ish
 ```
 
-### Development Mode
+### Podman Deployment
 
 ```bash
-# Run with live code reloading
-docker-compose --profile dev up -d mary2ish-dev
+# Build the container
+podman build -t mary2ish:latest .
 
-# Access dev version at http://localhost:8502
+# Run the container (example - adjust ports and mounts as needed)
+podman-compose up -d mary2ish
+
+# Access the application at http://localhost:8501
 ```
 
 ### Configuration Architecture

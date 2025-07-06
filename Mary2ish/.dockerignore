@@ -1,0 +1,87 @@
+# Development and documentation files
+docs/
+tests/
+*.md
+!README.md
+
+# Virtual environments and Python environments
+venv/
+.venv/
+env/
+.env/
+.virtualenv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment configuration
+.envrc
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Git and version control
+.git/
+.gitignore
+.gitattributes
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Build and distribution files
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Development tools
+.mypy_cache/
+.black/
+.flake8
+.bandit
+
+# Jupyter notebooks
+*.ipynb_checkpoints/
+
+# Local configuration and secrets (keep examples)
+config/*.yaml
+config/*.yml
+config/*.txt
+!config_examples/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+
+# OS generated files
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Docker files (optional - uncomment if you don't want these in the image)
+# Dockerfile*
+# docker-compose*.yml
+# .dockerignore
