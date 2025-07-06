@@ -2,16 +2,15 @@
 Mary 2.0ish - Streamlit Application
 
 Main entry point for the embeddable AI chat interface.
-This file orchestrates the application using modular components.
+Simplified to use FastAgent's built-in configuration loading.
 """
 
 import logging
 import streamlit as st
+import yaml
 from pathlib import Path
 
-from app.components.chat_interface import ChatApp
-from app.config.config_manager import ConfigManager
-from app.utils.error_display import display_configuration_error
+from app.components.chat_interface import ChatApp, load_ui_config
 
 # Configure logging
 logging.basicConfig(
@@ -21,15 +20,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def configure_streamlit_page(config_manager: ConfigManager) -> None:
+def configure_streamlit_page() -> None:
     """
     Configure Streamlit page settings based on UI configuration.
-    
-    Args:
-        config_manager: Configuration manager instance
     """
     try:
-        ui_config = config_manager.load_ui_config()
+        ui_config = load_ui_config()
         
         page_title = ui_config.get('page', {}).get('title', 'Mary 2.0ish')
         page_icon = ui_config.get('page', {}).get('icon', '🤖')
@@ -53,44 +49,54 @@ def configure_streamlit_page(config_manager: ConfigManager) -> None:
         )
 
 
-def display_configuration_status(config_manager: ConfigManager) -> None:
+def display_configuration_status() -> None:
     """
     Display configuration file status in sidebar for debugging.
-    
-    Args:
-        config_manager: Configuration manager instance
     """
     with st.sidebar:
         st.header("Configuration Status")
         
-        config_paths = config_manager.get_config_paths()
+        # Check for config files
+        config_files = {
+            "fastagent_config": "fastagent.config.yaml",
+            "fastagent_secrets": "fastagent.secrets.yaml", 
+            "ui_config": "ui.config.yaml",
+            "system_prompt": "system_prompt.txt",
+            "knowledge_facts": "knowledge_facts.txt"
+        }
         
-        for config_type, config_path in config_paths.items():
+        for config_type, filename in config_files.items():
+            config_path = Path(filename)
             if config_path.exists():
                 st.success(f"✅ {config_type.replace('_', ' ').title()} found")
             else:
-                status = "⚠️" if config_type in ["ui_config", "secrets"] else "❌"
+                status = "⚠️" if config_type in ["ui_config", "fastagent_secrets"] else "❌"
                 st.warning(f"{status} {config_type.replace('_', ' ').title()} missing")
         
-        # Display current configurations (safely)
+        # Display current UI configuration
         try:
             st.subheader("UI Configuration")
-            ui_config = config_manager.load_ui_config()
+            ui_config = load_ui_config()
             st.json(ui_config)
             
-            # Only show agent config structure (no sensitive data)
-            st.subheader("Agent Configuration Structure")
-            try:
-                agent_config = config_manager.load_agent_config()
-                # Create safe config view without sensitive information
-                safe_config = {
-                    "default_model": agent_config.get("default_model", "not set"),
-                    "execution_engine": agent_config.get("execution_engine", "not set"),
-                    "mcp_servers": list(agent_config.get("mcp", {}).get("servers", {}).keys())
-                }
-                st.json(safe_config)
-            except Exception:
-                st.warning("Agent configuration not available")
+            # Show basic agent config info if available
+            st.subheader("Agent Configuration")
+            agent_config_path = Path("fastagent.config.yaml")
+            if agent_config_path.exists():
+                try:
+                    with open(agent_config_path, 'r') as f:
+                        agent_config = yaml.safe_load(f)
+                    # Create safe config view without sensitive information
+                    safe_config = {
+                        "default_model": agent_config.get("default_model", "not set"),
+                        "execution_engine": agent_config.get("execution_engine", "not set"),
+                        "mcp_servers": list(agent_config.get("mcp", {}).get("servers", {}).keys()) if agent_config.get("mcp", {}).get("servers") else []
+                    }
+                    st.json(safe_config)
+                except Exception:
+                    st.warning("Could not parse agent configuration")
+            else:
+                st.warning("Agent configuration not found")
                 
         except Exception as e:
             st.error(f"Error displaying configuration: {e}")
@@ -99,11 +105,8 @@ def display_configuration_status(config_manager: ConfigManager) -> None:
 def main():
     """Main application function."""
     try:
-        # Initialize configuration manager
-        config_manager = ConfigManager()
-        
         # Configure Streamlit page
-        configure_streamlit_page(config_manager)
+        configure_streamlit_page()
         
         # Create and initialize chat app
         app = ChatApp()
@@ -112,7 +115,7 @@ def main():
         app.display_chat_interface()
         
         # Display configuration status in sidebar (for debugging)
-        display_configuration_status(config_manager)
+        display_configuration_status()
         
         logger.info("Application started successfully")
         

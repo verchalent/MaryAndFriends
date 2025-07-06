@@ -51,15 +51,16 @@ COPY --chown=appuser:appuser pyproject.toml uv.lock ./
 COPY --chown=appuser:appuser app/ ./app/
 COPY --chown=appuser:appuser main.py ./
 
-# Copy default configuration files (will be overridden by mounted volumes)
-COPY --chown=appuser:appuser fastagent.config.yaml ./
-COPY --chown=appuser:appuser system_prompt.txt ./
-COPY --chown=appuser:appuser ui.config.yaml ./
-COPY --chown=appuser:appuser fastagent.secrets.yaml ./
-COPY --chown=appuser:appuser knowledge_facts.txt ./
+# Copy example configuration files as defaults (can be overridden by mounting)
+COPY --chown=appuser:appuser config_examples/fastagent.config.yaml ./fastagent.config.yaml
+COPY --chown=appuser:appuser config_examples/system_prompt.txt ./system_prompt.txt
+COPY --chown=appuser:appuser config_examples/ui.config.yaml ./ui.config.yaml
+COPY --chown=appuser:appuser config_examples/fastagent.secrets.yaml ./fastagent.secrets.yaml
+COPY --chown=appuser:appuser config_examples/knowledge_facts.txt ./knowledge_facts.txt
 
-# Create directories for mounted configuration
-RUN mkdir -p /app/config/fastagent && chown -R appuser:appuser /app
+# Create directories for user cache
+RUN mkdir -p /home/appuser/.cache && \
+    chown -R appuser:appuser /app /home/appuser
 
 # Switch to non-root user
 USER appuser

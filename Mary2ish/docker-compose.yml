@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mary2ish:
+    build: .
+    image: mary2ish:optimized
+    container_name: mary2ish
+    ports:
+      - "8501:8501"
+    volumes:
+      # Mount your custom configuration files over the defaults
+      - ./config/fastagent.config.yaml:/app/fastagent.config.yaml:ro
+      - ./config/fastagent.secrets.yaml:/app/fastagent.secrets.yaml:ro
+      - ./config/system_prompt.txt:/app/system_prompt.txt:ro
+      - ./config/ui.config.yaml:/app/ui.config.yaml:ro
+      - ./config/knowledge_facts.txt:/app/knowledge_facts.txt:ro
+    environment:
+      # Optional: Override with environment variables
+      # ANTHROPIC_API_KEY: "your_key_here"
+      # OPENAI_API_KEY: "your_key_here"
+      # GOOGLE_API_KEY: "your_key_here"
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Optional: Development mode with live reload
+  mary2ish-dev:
+    build: .
+    image: mary2ish:optimized
+    container_name: mary2ish-dev
+    ports:
+      - "8502:8501"  # Different port for dev
+    volumes:
+      # Mount source code for development
+      - ./app:/app/app:ro
+      - ./main.py:/app/main.py:ro
+      # Mount config files
+      - ./config/fastagent.config.yaml:/app/fastagent.config.yaml:ro
+      - ./config/fastagent.secrets.yaml:/app/fastagent.secrets.yaml:ro
+      - ./config/system_prompt.txt:/app/system_prompt.txt:ro
+      - ./config/ui.config.yaml:/app/ui.config.yaml:ro
+      - ./config/knowledge_facts.txt:/app/knowledge_facts.txt:ro
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+    restart: unless-stopped
+    profiles:
+      - dev
