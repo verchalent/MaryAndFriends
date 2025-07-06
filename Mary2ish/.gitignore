@@ -74,13 +74,11 @@ fastagent.jsonl
 # Streamlit
 .streamlit/
 
-# Jupyter Notebooks
-.ipynb_checkpoints
-
 # pytest
 .pytest_cache/
 .coverage
 htmlcov/
+.tests/*
 
 # mypy
 .mypy_cache/
