@@ -55,8 +55,8 @@ COPY --chown=appuser:appuser main.py ./
 COPY --chown=appuser:appuser config_examples/fastagent.config.yaml ./fastagent.config.yaml
 COPY --chown=appuser:appuser config_examples/system_prompt.txt ./system_prompt.txt
 COPY --chown=appuser:appuser config_examples/ui.config.yaml ./ui.config.yaml
-COPY --chown=appuser:appuser config_examples/fastagent.secrets.yaml ./fastagent.secrets.yaml
-COPY --chown=appuser:appuser config_examples/knowledge_facts.txt ./knowledge_facts.txt
+COPY --chown=appuser:appuser config_examples/knowledge_facts.txt.example ./knowledge_facts.txt
+COPY --chown=appuser:appuser config_examples/fastagent.secrets.yaml.example ./fastagent.secrets.yaml
 
 # Create directories for user cache
 RUN mkdir -p /home/appuser/.cache && \
