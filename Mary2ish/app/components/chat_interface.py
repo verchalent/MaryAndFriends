@@ -7,12 +7,13 @@ Main ChatApp class for handling the Streamlit chat interface.
 import asyncio
 import logging
 import streamlit as st
+import yaml
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from mcp_agent.core.fastagent import FastAgent
 from mcp_agent.core.prompt import Prompt
 
-from app.config.config_manager import ConfigManager
 from app.utils.error_display import (
     display_agent_error,
     display_configuration_error,
@@ -23,6 +24,30 @@ from app.utils.response_processing import process_agent_response, process_markdo
 from app.styles.chat_styles import get_chat_styles, get_iframe_resize_script
 
 logger = logging.getLogger(__name__)
+
+
+def load_ui_config() -> Dict[str, Any]:
+    """Load UI configuration from file with defaults."""
+    defaults = {
+        "page": {"title": "Mary 2.0ish", "header": "Mary", "icon": "🤖"},
+        "chat": {
+            "agent_display_name": "Assistant",
+            "user_display_name": "You",
+            "input_placeholder": "Type your message here..."
+        },
+        "branding": {"footer_caption": "", "show_powered_by": False}
+    }
+    
+    try:
+        ui_config_file = Path("ui.config.yaml")
+        if ui_config_file.exists():
+            with open(ui_config_file, 'r') as f:
+                config = yaml.safe_load(f) or {}
+            return {**defaults, **config}
+    except Exception as e:
+        logger.warning(f"Could not load UI config, using defaults: {e}")
+    
+    return defaults
 
 
 def render_response_with_thinking(
@@ -68,7 +93,6 @@ class ChatApp:
         """Initialize the chat application."""
         self.fast_agent: Optional[FastAgent] = None
         self.agent_app = None
-        self.config_manager = ConfigManager()
         self.is_initialized = False
         
         # Initialize session state
@@ -77,31 +101,10 @@ class ChatApp:
         if "agent_initialized" not in st.session_state:
             st.session_state.agent_initialized = False
     
-    def load_configuration(self) -> bool:
-        """
-        Load configuration from files.
-        
-        Returns:
-            bool: True if configuration loaded successfully, False otherwise.
-        """
-        try:
-            # Load configurations through config manager
-            self.config_manager.load_agent_config()
-            self.config_manager.load_ui_config()
-            self.config_manager.load_system_prompt()
-            self.config_manager.load_knowledge_facts()  # Optional - won't fail if missing
-            
-            logger.info("All configurations loaded successfully")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error loading configuration: {e}")
-            display_configuration_error(e, "agent")
-            return False
-    
     async def initialize_agent(self) -> bool:
         """
         Initialize the fast-agent.ai agent.
+        FastAgent automatically loads configuration from files in the working directory.
         
         Returns:
             bool: True if agent initialized successfully, False otherwise.
@@ -109,96 +112,106 @@ class ChatApp:
         try:
             if self.is_initialized:
                 return True
-            
-            # Load configurations first
-            if not self.load_configuration():
-                return False
                 
-            config = self.config_manager.load_agent_config()
-            system_prompt = self.config_manager.get_enhanced_system_prompt()
-            
-            # Create FastAgent instance - let it auto-discover config files
+            # Load enhanced system prompt (base + knowledge facts if available)
+            enhanced_instruction = self._load_enhanced_system_prompt()
+                
+            # Create FastAgent instance - it auto-discovers config files
             self.fast_agent = FastAgent(
                 name="Mary2ish Chat Agent",
                 parse_cli_args=False  # Don't parse CLI args in Streamlit
             )
             
-            # Get default model from config
-            default_model = config.get('default_model', 'haiku')
-            
-            # Extract MCP server names from configuration
-            mcp_servers = []
-            mcp_config = config.get('mcp', {})
-            if 'servers' in mcp_config:
-                mcp_servers = list(mcp_config['servers'].keys())
-                logger.info(f"Found MCP servers in config: {mcp_servers}")
+            # Define the agent with enhanced instruction if we have one
+            if enhanced_instruction:
+                @self.fast_agent.agent(
+                    name="chat_agent",
+                    instruction=enhanced_instruction,
+                    use_history=True
+                )
+                async def chat_agent_func():
+                    """Agent function - required by fast-agent but not used directly."""
+                    pass
             else:
-                logger.info("No MCP servers found in configuration")
-            
-            # Define the agent with system prompt and MCP servers
-            @self.fast_agent.agent(
-                name="chat_agent",
-                instruction=system_prompt,
-                model=default_model,
-                use_history=True,
-                servers=mcp_servers  # Include configured MCP servers
-            )
-            async def chat_agent_func():
-                """Agent function - required by fast-agent but not used directly."""
-                pass
+                # Fall back to letting FastAgent load system_prompt.txt normally
+                @self.fast_agent.agent(
+                    name="chat_agent",
+                    use_history=True
+                )
+                async def chat_agent_func():
+                    """Agent function - required by fast-agent but not used directly."""
+                    pass
             
             # Initialize the agent
             try:
                 self.agent_app = await self.fast_agent.run().__aenter__()
                 self.is_initialized = True
                 
-                logger.info(f"Fast-agent initialized successfully with MCP servers: {mcp_servers}")
-                
-                # Test MCP server connectivity if servers are configured
-                if mcp_servers:
-                    await self._test_mcp_connectivity(mcp_servers)
-                
+                logger.info("Fast-agent initialized successfully")
                 return True
                 
             except Exception as init_error:
-                # Log specific MCP connection errors if they occur
-                if "mcp" in str(init_error).lower() or "server" in str(init_error).lower():
-                    logger.warning(f"MCP server connection issue during initialization: {init_error}")
-                    logger.info("Agent will continue without MCP servers. Check server connectivity.")
-                    
-                    # Try to initialize without MCP servers as fallback
-                    try:
-                        @self.fast_agent.agent(
-                            name="chat_agent_fallback",
-                            instruction=system_prompt,
-                            model=default_model,
-                            use_history=True
-                            # No servers parameter for fallback
-                        )
-                        async def chat_agent_fallback_func():
-                            """Fallback agent function without MCP servers."""
-                            pass
-                            
-                        self.agent_app = await self.fast_agent.run().__aenter__()
-                        self.is_initialized = True
-                        
-                        logger.info("Fast-agent initialized successfully in fallback mode (no MCP servers)")
-                        display_warning_message(
-                            "Fallback Mode",
-                            "Some advanced features may be unavailable due to server connectivity issues. The application is running without MCP servers."
-                        )
-                        return True
-                        
-                    except Exception as fallback_error:
-                        logger.error(f"Failed to initialize even in fallback mode: {fallback_error}")
-                        raise fallback_error
-                else:
-                    raise init_error
-            
+                logger.error(f"Failed to initialize agent: {init_error}")
+                display_agent_error(init_error)
+                return False
+                
         except Exception as e:
+            logger.error(f"Error initializing agent: {e}")
             logger.error(f"Error initializing agent: {e}")
             display_agent_error(e)
             return False
+    
+    def _load_enhanced_system_prompt(self) -> Optional[str]:
+        """
+        Load and enhance system prompt with knowledge facts if available.
+        
+        Returns:
+            Optional[str]: Enhanced system prompt, or None to let FastAgent handle it
+        """
+        try:
+            # Paths for system prompt and knowledge facts
+            system_prompt_path = Path("system_prompt.txt")
+            knowledge_facts_path = Path("knowledge_facts.txt")
+            
+            # If no system prompt file, let FastAgent handle defaults
+            if not system_prompt_path.exists():
+                logger.info("No system_prompt.txt found - letting FastAgent use defaults")
+                return None
+                
+            # Read base system prompt
+            with open(system_prompt_path, 'r', encoding='utf-8') as f:
+                base_prompt = f.read().strip()
+            
+            # If no knowledge facts, just return base prompt
+            if not knowledge_facts_path.exists():
+                logger.info("No knowledge_facts.txt found - using base system prompt")
+                return base_prompt
+                
+            # Read knowledge facts
+            with open(knowledge_facts_path, 'r', encoding='utf-8') as f:
+                knowledge_facts = f.read().strip()
+            
+            # Skip if knowledge facts are empty or contain only examples
+            if not knowledge_facts or "Example:" in knowledge_facts or "TODO:" in knowledge_facts:
+                logger.info("Knowledge facts file contains only examples - using base system prompt")
+                return base_prompt
+                
+            # Create enhanced prompt
+            enhanced_prompt = f"""{base_prompt}
+
+PERSONAL KNOWLEDGE:
+The following are specific facts about the user and context that you should incorporate naturally into conversations:
+
+{knowledge_facts}
+
+Please use this information naturally and appropriately in your responses, but don't be overly obvious about it. Be helpful and personal while maintaining your character."""
+            
+            logger.info("Enhanced system prompt with knowledge facts")
+            return enhanced_prompt
+            
+        except Exception as e:
+            logger.warning(f"Error loading enhanced system prompt: {e}")
+            return None  # Let FastAgent handle it
     
     async def send_message(self, message: str) -> str:
         """
@@ -260,7 +273,7 @@ class ChatApp:
         st.markdown(get_iframe_resize_script(), unsafe_allow_html=True)
         
         # Load UI configuration
-        ui_config = self.config_manager.load_ui_config()
+        ui_config = load_ui_config()
         
         # Display page header if configured
         page_header = ui_config.get("page", {}).get("header")

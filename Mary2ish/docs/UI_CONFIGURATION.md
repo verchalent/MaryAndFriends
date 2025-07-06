@@ -127,12 +127,25 @@ The current implementation includes enhanced visual styling that provides:
 
 ## Configuration Loading
 
-The application loads the UI configuration at startup with the following behavior:
+The application loads the UI configuration at startup with simplified direct file loading:
 
-1. **File exists**: Loads configuration from `ui.config.yaml`
-2. **File missing**: Uses built-in defaults (shown above)
-3. **Partial configuration**: Missing sections fall back to defaults
+1. **File exists**: Loads configuration from `ui.config.yaml` in the current directory
+2. **File missing**: Uses built-in defaults with basic Mary branding
+3. **Partial configuration**: Missing sections fall back to sensible defaults
 4. **Invalid YAML**: Application reports error and uses defaults
+
+### Configuration File Locations
+
+The UI configuration is loaded from `ui.config.yaml` in the application's working directory.
+
+**For Docker deployments:**
+- Example configs are included in the container at build time
+- Real configs are mounted from the `config/` directory at runtime via docker-compose
+- This allows customization without rebuilding the container
+
+**For local development:**
+- Place `ui.config.yaml` in the project root directory
+- The file is loaded directly using Python's YAML parser
 
 ## Hot Reloading
 
@@ -147,22 +160,26 @@ uv run streamlit run app/main.py
 ## Troubleshooting
 
 ### Configuration Not Applied
-- Check that `ui.config.yaml` is in the root directory (same level as `app/`)
-- Verify YAML syntax is correct (use a YAML validator)
+
+- Check that `ui.config.yaml` is in the current working directory
+- Verify YAML syntax is correct (use a YAML validator)  
 - Restart the Streamlit application
-- Check the sidebar "Configuration Status" section for file detection
+- Check application logs for any configuration loading errors
 
 ### YAML Syntax Errors
+
 - Ensure proper indentation (use spaces, not tabs)
 - Quote string values containing special characters
 - Use proper YAML list and dictionary syntax
 
 ### File Location
-The configuration file must be located at:
-```
+
+The configuration file should be in the working directory when the application starts:
+
+```text
 Mary2ish/
 ├── ui.config.yaml          # ← UI configuration file
-├── fastagent.config.yaml   # ← FastAgent configuration
+├── fastagent.config.yaml   # ← FastAgent configuration  
 ├── app/
 │   └── main.py
 └── ...
