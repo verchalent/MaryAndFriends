@@ -134,27 +134,7 @@ class AgentGenerator:
         """
         return {
             "version": "3.8",
-            "services": {
-                "traefik": {
-                    "image": "traefik:v3",
-                    "command": [
-                        "--api.insecure=true",
-                        "--providers.docker=true", 
-                        "--providers.docker.exposedbydefault=false",
-                        "--entrypoints.web.address=:80"
-                    ],
-                    "ports": [
-                        "80:80",
-                        "8080:8080"
-                    ],
-                    "volumes": [
-                        "/var/run/docker.sock:/var/run/docker.sock:ro"
-                    ],
-                    "networks": [
-                        "ai_agents_network"
-                    ]
-                }
-            },
+            "services": {},
             "networks": {
                 "ai_agents_network": {
                     "driver": "bridge"
@@ -162,20 +142,60 @@ class AgentGenerator:
             }
         }
     
-    def generate_agent_service(self, agent_name: str) -> Dict[str, Any]:
+    def get_next_available_port(self, existing_agents: List[str]) -> int:
+        """Calculate the next available port for a new agent.
+        
+        Args:
+            existing_agents: List of existing agent names
+            
+        Returns:
+            Next available port starting from 8004
+        """
+        base_port = 8004
+        used_ports = []
+        
+        # Load existing docker-compose to check used ports
+        if self.docker_compose_file.exists():
+            with open(self.docker_compose_file, 'r') as f:
+                compose_config = yaml.safe_load(f) or {}
+                
+            services = compose_config.get('services', {})
+            for service_name, service_config in services.items():
+                ports = service_config.get('ports', [])
+                for port_mapping in ports:
+                    if isinstance(port_mapping, str):
+                        host_port = int(port_mapping.split(':')[0])
+                        used_ports.append(host_port)
+        
+        # Find next available port
+        current_port = base_port
+        while current_port in used_ports:
+            current_port += 1
+            
+        return current_port
+
+    def generate_agent_service(self, agent_name: str, existing_agents: List[str] = None) -> Dict[str, Any]:
+    def generate_agent_service(self, agent_name: str, existing_agents: List[str] = None) -> Dict[str, Any]:
         """Generate docker-compose service configuration for an agent.
         
         Args:
             agent_name: Name of the agent
+            existing_agents: List of existing agent names (for port calculation)
             
         Returns:
             Service configuration dictionary
         """
         service_name = agent_name.replace('_', '-')
-        hostname = f"{service_name}.local"
+        
+        # Calculate the port for this agent
+        existing_agents = existing_agents or []
+        port = self.get_next_available_port(existing_agents)
         
         return {
             "build": "./Mary2ish",
+            "ports": [
+                f"{port}:8501"
+            ],
             "volumes": [
                 f"./configs/{agent_name}/fastagent.config.yaml:/app/fastagent.config.yaml",
                 f"./configs/{agent_name}/ui.config.yaml:/app/ui.config.yaml",
@@ -185,13 +205,6 @@ class AgentGenerator:
             ],
             "networks": [
                 "ai_agents_network"
-            ],
-            "labels": [
-                "traefik.enable=true",
-                f"traefik.http.routers.{service_name}.rule=Host(`{hostname}`)",
-                f"traefik.http.routers.{service_name}.entrypoints=web",
-                f"traefik.http.services.{service_name}.loadbalancer.server.port=8501",
-                f"traefik.docker.network=ai_agents_network"
             ],
             "healthcheck": {
                 "test": ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"],
@@ -227,16 +240,14 @@ class AgentGenerator:
             if "networks" not in compose_config:
                 compose_config["networks"] = {"ai_agents_network": {"driver": "bridge"}}
             
-            # Add/update Traefik service
-            if "traefik" not in compose_config["services"]:
-                base_config = self.get_base_docker_compose()
-                compose_config["services"]["traefik"] = base_config["services"]["traefik"]
-                logger.info("Added Traefik service")
+            # Get existing agents for port calculation
+            existing_agents = list(compose_config["services"].keys())
             
             # Add agent services
             for agent_name in agent_names:
-                service_config = self.generate_agent_service(agent_name)
+                service_config = self.generate_agent_service(agent_name, existing_agents)
                 compose_config["services"][agent_name] = service_config
+                existing_agents.append(agent_name)  # Update list for next agent
                 logger.info(f"Added/updated service: {agent_name}")
             
             # Write updated docker-compose.yml
@@ -250,21 +261,37 @@ class AgentGenerator:
             logger.error(f"❌ Failed to update docker-compose.yml: {e}")
             return False
     
-    def generate_hosts_entries(self, agent_names: List[str]) -> str:
-        """Generate /etc/hosts entries for agent hostnames.
+    def generate_port_info(self, agent_names: List[str]) -> str:
+        """Generate port information for agent access.
         
         Args:
             agent_names: List of agent names
             
         Returns:
-            String containing hosts file entries
+            String containing port access information
         """
-        entries = []
-        for agent_name in agent_names:
-            hostname = agent_name.replace('_', '-') + '.local'
-            entries.append(f"127.0.0.1    {hostname}")
+        # Load docker-compose to get port assignments
+        if not self.docker_compose_file.exists():
+            return "No docker-compose.yml found"
+            
+        with open(self.docker_compose_file, 'r') as f:
+            compose_config = yaml.safe_load(f) or {}
+            
+        services = compose_config.get('services', {})
+        port_info = []
         
-        return "\n".join(entries)
+        for agent_name in agent_names:
+            if agent_name in services:
+                ports = services[agent_name].get('ports', [])
+                if ports:
+                    host_port = ports[0].split(':')[0]
+                    port_info.append(f"   • {agent_name}: http://localhost:{host_port}")
+                else:
+                    port_info.append(f"   • {agent_name}: No port configured")
+            else:
+                port_info.append(f"   • {agent_name}: Service not found")
+        
+        return "\n".join(port_info)
     
     def validate_agent_names(self, agent_names: List[str]) -> List[str]:
         """Validate and sanitize agent names.
@@ -328,20 +355,14 @@ class AgentGenerator:
         print("="*60)
         print(f"✅ Processed {success_count} agent configuration(s)")
         print(f"✅ Updated docker-compose.yml")
-        print("\n� NOTE: Existing configuration files were preserved to protect customizations")
-        print("\n�📋 NEXT STEPS:")
-        print("\n1. Add the following entries to your /etc/hosts file:")
-        hosts_entries = self.generate_hosts_entries(valid_names)
-        print(f"   {hosts_entries}")
-        print("\n2. Deploy your agents:")
+        print("\n📝 NOTE: Existing configuration files were preserved to protect customizations")
+        print("\n📋 NEXT STEPS:")
+        print("\n1. Deploy your agents:")
         print("   docker-compose up --build -d")
-        print("\n3. Access your agents:")
-        for agent_name in valid_names:
-            hostname = agent_name.replace('_', '-') + '.local'
-            print(f"   • {agent_name}: http://{hostname}")
-        print("\n4. View Traefik dashboard:")
-        print("   http://localhost:8080")
-        print("\n5. Customize agent configurations in the configs/ directory")
+        print("\n2. Access your agents directly via ports:")
+        port_info = self.generate_port_info(valid_names)
+        print(f"{port_info}")
+        print("\n3. Customize agent configurations in the configs/ directory")
         print("   (Only missing files were created - your customizations are safe!)")
         print("="*60)
         

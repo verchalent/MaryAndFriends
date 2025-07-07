@@ -14,12 +14,8 @@ services:
       - -f
       - http://localhost:8501/_stcore/health
       timeout: 10s
-    labels:
-    - traefik.enable=true
-    - traefik.http.routers.mary.rule=Host(`mary.local`)
-    - traefik.http.routers.mary.entrypoints=web
-    - traefik.http.services.mary.loadbalancer.server.port=8501
-    - traefik.docker.network=ai_agents_network
+    ports:
+    - "8004:8501"
     networks:
     - ai_agents_network
     volumes:
@@ -40,12 +36,8 @@ services:
       - -f
       - http://localhost:8501/_stcore/health
       timeout: 10s
-    labels:
-    - traefik.enable=true
-    - traefik.http.routers.rick.rule=Host(`rick.local`)
-    - traefik.http.routers.rick.entrypoints=web
-    - traefik.http.services.rick.loadbalancer.server.port=8501
-    - traefik.docker.network=ai_agents_network
+    ports:
+    - "8005:8501"
     networks:
     - ai_agents_network
     volumes:
@@ -54,17 +46,3 @@ services:
     - ./configs/rick/system_prompt.txt:/app/system_prompt.txt
     - ./configs/rick/knowledge_facts.txt:/app/knowledge_facts.txt
     - ./configs/rick/fastagent.secrets.yaml:/app/fastagent.secrets.yaml
-  traefik:
-    command:
-    - --api.insecure=true
-    - --providers.docker=true
-    - --providers.docker.exposedbydefault=false
-    - --entrypoints.web.address=:80
-    image: traefik:v3
-    networks:
-    - ai_agents_network
-    ports:
-    - 8080:80
-    - 8085:8080
-    volumes:
-    - /var/run/docker.sock:/var/run/docker.sock:ro
