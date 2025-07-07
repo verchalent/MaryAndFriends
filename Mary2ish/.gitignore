@@ -38,8 +38,6 @@ venv.bak/
 .env.staging
 
 # Secrets and API keys
-*secrets*
-*secret*
 *.key
 *.pem
 

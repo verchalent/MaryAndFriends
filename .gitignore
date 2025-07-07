@@ -26,7 +26,7 @@ MANIFEST
 .env
 .venv
 env/
-venv/
+venv/git p
 ENV/
 env.bak/
 venv.bak/
@@ -41,7 +41,7 @@ venv.bak/
 *.key
 *.pem
 configs/*
-config/*
+Mary2ish/config/*
 
 
 # IDEs
