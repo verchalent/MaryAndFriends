@@ -78,6 +78,8 @@ class AgentGenerator:
     def create_agent_config(self, agent_name: str) -> bool:
         """Create configuration directory and files for an agent.
         
+        Only creates missing files - does not overwrite existing configurations.
+        
         Args:
             agent_name: Name of the agent to create
             
@@ -87,18 +89,37 @@ class AgentGenerator:
         agent_config_dir = self.configs_dir / agent_name
         
         try:
-            # Create agent config directory
-            agent_config_dir.mkdir(exist_ok=True)
-            logger.info(f"Created config directory: {agent_config_dir}")
+            # Create agent config directory if it doesn't exist
+            if not agent_config_dir.exists():
+                agent_config_dir.mkdir(exist_ok=True)
+                logger.info(f"Created config directory: {agent_config_dir}")
+            else:
+                logger.info(f"Config directory already exists: {agent_config_dir}")
             
-            # Copy template files
+            # Copy template files only if they don't exist
+            files_created = 0
+            files_skipped = 0
+            
             for template_file in self.template_dir.iterdir():
                 if template_file.is_file() and not template_file.name.startswith('.'):
                     dest_file = agent_config_dir / template_file.name
-                    shutil.copy2(template_file, dest_file)
-                    logger.debug(f"Copied {template_file.name} to {agent_config_dir}")
+                    
+                    if not dest_file.exists():
+                        shutil.copy2(template_file, dest_file)
+                        logger.debug(f"Copied {template_file.name} to {agent_config_dir}")
+                        files_created += 1
+                    else:
+                        logger.debug(f"Skipped existing file: {dest_file}")
+                        files_skipped += 1
             
-            logger.info(f"✅ Agent configuration created: {agent_name}")
+            if files_created > 0:
+                logger.info(f"✅ Agent configuration created: {agent_name} ({files_created} files created)")
+            else:
+                logger.info(f"✅ Agent configuration verified: {agent_name} (all files already exist)")
+                
+            if files_skipped > 0:
+                logger.info(f"📄 Preserved existing files: {files_skipped} files kept unchanged")
+                
             return True
             
         except Exception as e:
@@ -299,17 +320,16 @@ class AgentGenerator:
         if not self.update_docker_compose(valid_names):
             return False
         
-        # Generate hosts file entries
-        hosts_entries = self.generate_hosts_entries(valid_names)
-        
         # Print success message and next steps
         print("\n" + "="*60)
         print("🎉 AGENT GENERATION COMPLETE!")
         print("="*60)
-        print(f"✅ Created {success_count} agent configuration(s)")
+        print(f"✅ Processed {success_count} agent configuration(s)")
         print(f"✅ Updated docker-compose.yml")
-        print("\n📋 NEXT STEPS:")
+        print("\n� NOTE: Existing configuration files were preserved to protect customizations")
+        print("\n�📋 NEXT STEPS:")
         print("\n1. Add the following entries to your /etc/hosts file:")
+        hosts_entries = self.generate_hosts_entries(valid_names)
         print(f"   {hosts_entries}")
         print("\n2. Deploy your agents:")
         print("   docker-compose up --build -d")
@@ -320,6 +340,7 @@ class AgentGenerator:
         print("\n4. View Traefik dashboard:")
         print("   http://localhost:8080")
         print("\n5. Customize agent configurations in the configs/ directory")
+        print("   (Only missing files were created - your customizations are safe!)")
         print("="*60)
         
         return True

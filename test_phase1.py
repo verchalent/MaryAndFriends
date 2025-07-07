@@ -45,7 +45,7 @@ def test_generated_agents_exist():
         return False
     
     # Check for example agents
-    example_agents = ["support_agent", "sales_agent"]
+    example_agents = ["mary", "rick"]
     
     for agent in example_agents:
         agent_dir = configs_dir / agent
@@ -101,7 +101,7 @@ def test_docker_compose_valid():
         return False
     
     # Check for agent services
-    expected_agents = ["support_agent", "sales_agent"]
+    expected_agents = ["mary", "rick"]
     for agent in expected_agents:
         if agent not in config["services"]:
             print(f"❌ Agent service not found: {agent}")
