@@ -175,7 +175,6 @@ class AgentGenerator:
         return current_port
 
     def generate_agent_service(self, agent_name: str, existing_agents: List[str] = None) -> Dict[str, Any]:
-    def generate_agent_service(self, agent_name: str, existing_agents: List[str] = None) -> Dict[str, Any]:
         """Generate docker-compose service configuration for an agent.
         
         Args:

@@ -14,10 +14,10 @@ services:
       - -f
       - http://localhost:8501/_stcore/health
       timeout: 10s
-    ports:
-    - "8004:8501"
     networks:
     - ai_agents_network
+    ports:
+    - 8004:8501
     volumes:
     - ./configs/mary/fastagent.config.yaml:/app/fastagent.config.yaml
     - ./configs/mary/ui.config.yaml:/app/ui.config.yaml
@@ -36,10 +36,10 @@ services:
       - -f
       - http://localhost:8501/_stcore/health
       timeout: 10s
-    ports:
-    - "8005:8501"
     networks:
     - ai_agents_network
+    ports:
+    - 8005:8501
     volumes:
     - ./configs/rick/fastagent.config.yaml:/app/fastagent.config.yaml
     - ./configs/rick/ui.config.yaml:/app/ui.config.yaml
