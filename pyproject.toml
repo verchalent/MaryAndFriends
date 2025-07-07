@@ -1,0 +1,26 @@
+[project]
+name = "maryandfriends"
+version = "0.1.0"
+description = "AI Agent Collection Deployment Framework"
+requires-python = ">=3.13"
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+generate-agents = "generate_agents:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = []  # Only include the script, not the subdirectories
+
+[tool.setuptools]
+py-modules = ["generate_agents"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+]

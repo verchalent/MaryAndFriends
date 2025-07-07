@@ -1,0 +1,48 @@
+# UI Configuration File - Template
+# Copy this file to configs/your_agent_name/ui.config.yaml and customize
+# 
+# This file contains customizable UI elements that can be modified
+# without changing the application code.
+
+# Page Configuration
+page:
+  # Title that appears in the browser tab
+  title: "AI Chat Assistant"
+  
+  # Main header displayed at the top of the chat interface
+  header: "AI Chat Assistant"
+  
+  # Icon displayed in the browser tab (emoji or path to icon file)
+  icon: "🤖"
+
+# Chat Interface Configuration
+chat:
+  # Display name for the AI assistant in chat messages
+  # This appears before each assistant response (e.g., "Assistant:", "Mary:", etc.)
+  agent_display_name: "Assistant"
+  
+  # Display name for the user in chat messages
+  user_display_name: "You"
+  
+  # Placeholder text for the chat input box
+  input_placeholder: "Type your message here..."
+
+# Branding (Optional)
+branding:
+  # Footer caption text (leave empty for no footer)
+  footer_caption: ""
+  
+  # Show "Powered by FastAgent" branding
+  show_powered_by: false
+
+# Optional: Custom CSS styling (advanced users)
+# custom_css: |
+#   .stButton > button {
+#     background-color: #ff6b6b;
+#     color: white;
+#   }
+
+# Optional: Additional UI configuration
+# sidebar:
+#   show_config_status: true
+#   show_debug_info: false

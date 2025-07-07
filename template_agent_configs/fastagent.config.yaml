@@ -1,0 +1,49 @@
+# FastAgent Configuration File - Template
+# Copy this file to configs/your_agent_name/fastagent.config.yaml and customize
+
+# Default Model Configuration:
+#
+# Takes format:
+#   <provider>.<model_string>.<reasoning_effort?> (e.g. anthropic.claude-3-5-sonnet-20241022 or openai.o3-mini.low)
+# Accepts aliases for Anthropic Models: haiku, haiku3, sonnet, sonnet35, opus, opus3
+# and OpenAI Models: gpt-4.1, gpt-4.1-mini, o1, o1-mini, o3-mini
+#
+# If not specified, defaults to "haiku".
+# Can be overriden with a command line switch --model=<model>, or within the Agent constructor.
+
+# Example model configurations (uncomment and modify as needed):
+#default_model: haiku                    # Anthropic Claude 3 Haiku
+#default_model: sonnet                   # Anthropic Claude 3.5 Sonnet
+#default_model: gpt-4.1                  # OpenAI GPT-4
+#default_model: generic.llama3:8b        # Local Ollama model
+#default_model: generic.qwen3:14b        # Default local model
+default_model: generic.gemma3n:latest    # Default local model
+
+# Logging and Console Configuration:
+logger:
+    # level: "debug" | "info" | "warning" | "error"
+    # type: "none" | "console" | "file" | "http"
+    # path: "/path/to/logfile.jsonl"
+
+    # Switch the progress display on or off
+    progress_display: true
+
+    # Show chat User/Assistant messages on the console
+    show_chat: true
+    # Show tool calls on the console
+    show_tools: true
+    # Truncate long tool responses on the console
+    truncate_tools: true
+
+# Generic/Local LLM Configuration (for Ollama, etc.)
+generic:
+  api_key: "ollama"  # Default for Ollama
+  base_url: "http://localhost:11434/v1"  # Default Ollama endpoint
+
+# Optional: MCP Server Configuration
+# Uncomment and configure as needed
+#mcp:
+#  servers:
+#    example_server:
+#      transport: "http"
+#      url: "http://localhost:8000/mcp/"

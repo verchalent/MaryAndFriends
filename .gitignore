@@ -42,6 +42,7 @@ venv.bak/
 *secret*
 *.key
 *.pem
+configs/*
 
 # Configuration with secrets
 config/fastagent/fastagent.secrets.yaml

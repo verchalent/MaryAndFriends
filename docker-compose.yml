@@ -1,0 +1,67 @@
+services:
+  sales_agent:
+    build: ./Mary2ish
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 30s
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8501/_stcore/health
+      timeout: 10s
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.sales-agent.rule=Host(`sales-agent.local`)
+    - traefik.http.routers.sales-agent.entrypoints=web
+    networks:
+    - ai_agents_network
+    volumes:
+    - ./configs/sales_agent/fastagent.config.yaml:/app/fastagent.config.yaml
+    - ./configs/sales_agent/ui.config.yaml:/app/ui.config.yaml
+    - ./configs/sales_agent/system_prompt.txt:/app/system_prompt.txt
+    - ./configs/sales_agent/knowledge_facts.txt:/app/knowledge_facts.txt
+    - ./configs/sales_agent/fastagent.secrets.yaml:/app/fastagent.secrets.yaml
+  support_agent:
+    build: ./Mary2ish
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 30s
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8501/_stcore/health
+      timeout: 10s
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.support-agent.rule=Host(`support-agent.local`)
+    - traefik.http.routers.support-agent.entrypoints=web
+    networks:
+    - ai_agents_network
+    volumes:
+    - ./configs/support_agent/fastagent.config.yaml:/app/fastagent.config.yaml
+    - ./configs/support_agent/ui.config.yaml:/app/ui.config.yaml
+    - ./configs/support_agent/system_prompt.txt:/app/system_prompt.txt
+    - ./configs/support_agent/knowledge_facts.txt:/app/knowledge_facts.txt
+    - ./configs/support_agent/fastagent.secrets.yaml:/app/fastagent.secrets.yaml
+  traefik:
+    command:
+    - --api.insecure=true
+    - --providers.docker=true
+    - --providers.docker.exposedbydefault=false
+    - --entrypoints.web.address=:80
+    image: traefik:v3
+    networks:
+    - ai_agents_network
+    ports:
+    - 80:80
+    - 8080:8080
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+
+networks:
+  ai_agents_network:
+    driver: bridge
