@@ -1,4 +1,55 @@
+networks:
+  ai_agents_network:
+    driver: bridge
 services:
+  mary:
+    build: ./Mary2ish
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 30s
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8501/_stcore/health
+      timeout: 10s
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.mary.rule=Host(`mary.local`)
+    - traefik.http.routers.mary.entrypoints=web
+    networks:
+    - ai_agents_network
+    volumes:
+    - ./configs/mary/fastagent.config.yaml:/app/fastagent.config.yaml
+    - ./configs/mary/ui.config.yaml:/app/ui.config.yaml
+    - ./configs/mary/system_prompt.txt:/app/system_prompt.txt
+    - ./configs/mary/knowledge_facts.txt:/app/knowledge_facts.txt
+    - ./configs/mary/fastagent.secrets.yaml:/app/fastagent.secrets.yaml
+  rick:
+    build: ./Mary2ish
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 30s
+      test:
+      - CMD
+      - curl
+      - -f
+      - http://localhost:8501/_stcore/health
+      timeout: 10s
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.rick.rule=Host(`rick.local`)
+    - traefik.http.routers.rick.entrypoints=web
+    networks:
+    - ai_agents_network
+    volumes:
+    - ./configs/rick/fastagent.config.yaml:/app/fastagent.config.yaml
+    - ./configs/rick/ui.config.yaml:/app/ui.config.yaml
+    - ./configs/rick/system_prompt.txt:/app/system_prompt.txt
+    - ./configs/rick/knowledge_facts.txt:/app/knowledge_facts.txt
+    - ./configs/rick/fastagent.secrets.yaml:/app/fastagent.secrets.yaml
   sales_agent:
     build: ./Mary2ish
     healthcheck:
@@ -61,7 +112,3 @@ services:
     - 8080:8080
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
-
-networks:
-  ai_agents_network:
-    driver: bridge
