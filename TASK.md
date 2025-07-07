@@ -59,27 +59,29 @@ This document outlines the detailed tasks for Junior Software Development Engine
 
 **Tasks for Jr SDEs:**
 
-* [ ] **Task 2.1: Establish Dedicated Docker Network**  
-  * [ ] Modify the docker-compose.yml (which is now primarily managed by the generate\_agents.py script) to define a single ai\_agents\_network of type bridge.  
-  * [ ] Ensure the generate\_agents.py script assigns all generated agent services to this ai\_agents\_network.  
-  * [ ] **Self-Check:** After running generate\_agents.py and docker-compose up, does docker network ls show ai\_agents\_network and docker inspect \<agent\_container\_id\> confirm the agent is on this network?  
-* [ ] **Task 2.2: Deploy Latest Traefik Container**  
-  * [ ] Add a new service named traefik to the base docker-compose.yml template (that generate\_agents.py reads from).  
-  * [ ] Use the traefik:v3 image (or traefik:latest if preferred for always getting the absolute newest).  
-  * [ ] Configure Traefik to expose ports 80 (for web traffic) and 8080 (for the dashboard, for testing).  
-  * [ ] Mount the Docker socket (/var/run/docker.sock) into the Traefik container for Docker provider access.  
-  * [ ] Connect Traefik to the ai\_agents\_network.  
-  * [ ] Add Traefik commands: \--api.insecure=true, \--providers.docker=true, \--providers.docker.exposedbydefault=false, \--entrypoints.web.address=:80.  
-  * [ ] **Self-Check:** Does Traefik start successfully and is its dashboard accessible at http://localhost:8080?  
-* [ ] **Task 2.3: Configure Traefik as Proxy for Agents**  
-  * [ ] Ensure the generate\_agents.py script correctly adds the following Traefik labels to *each* agent service it generates:  
-    * [ ] traefik.enable=true  
-    * [ ] traefik.http.routers.agent-name.rule=Host(\\agent-name.local\`)\` (using the agent's name dynamically)  
-    * [ ] traefik.http.routers.agent-name.entrypoints=web  
-  * [ ] Ensure the Mary2Ish Dockerfile exposes the correct port (e.g., EXPOSE 8000\) that Traefik will use for routing.  
-  * [ ] Modify your local hosts file (e.g., /etc/hosts on Linux/macOS, C:\\Windows\\System32\\drivers\\etc\\hosts on Windows) to map 127.0.0.1 to the generated agent hostnames (e.g., agent-alpha.local, agent-beta.local).  
+* [x] **Task 2.1: Establish Dedicated Docker Network**  
+  * [x] Modify the docker-compose.yml (which is now primarily managed by the generate\_agents.py script) to define a single ai\_agents\_network of type bridge.  
+  * [x] Ensure the generate\_agents.py script assigns all generated agent services to this ai\_agents\_network.  
+  * [x] **Self-Check:** After running generate\_agents.py and docker-compose up, does docker network ls show ai\_agents\_network and docker inspect \<agent\_container\_id\> confirm the agent is on this network?  
+* [x] **Task 2.2: Deploy Latest Traefik Container**  
+  * [x] Add a new service named traefik to the base docker-compose.yml template (that generate\_agents.py reads from).  
+  * [x] Use the traefik:v3 image (or traefik:latest if preferred for always getting the absolute newest).  
+  * [x] Configure Traefik to expose ports 80 (for web traffic) and 8080 (for the dashboard, for testing).  
+  * [x] Mount the Docker socket (/var/run/docker.sock) into the Traefik container for Docker provider access.  
+  * [x] Connect Traefik to the ai\_agents\_network.  
+  * [x] Add Traefik commands: \--api.insecure=true, \--providers.docker=true, \--providers.docker.exposedbydefault=false, \--entrypoints.web.address=:80.  
+  * [x] **Self-Check:** Does Traefik start successfully and is its dashboard accessible at http://localhost:8080?  
+* [x] **Task 2.3: Configure Traefik as Proxy for Agents**  
+  * [x] Ensure the generate\_agents.py script correctly adds the following Traefik labels to *each* agent service it generates:  
+    * [x] traefik.enable=true  
+    * [x] traefik.http.routers.agent-name.rule=Host(\\agent-name.local\`)\` (using the agent's name dynamically)  
+    * [x] traefik.http.routers.agent-name.entrypoints=web  
+    * [x] **FIXED**: traefik.http.services.agent-name.loadbalancer.server.port=8501 (was missing)
+    * [x] **FIXED**: traefik.docker.network=ai\_agents\_network (was missing)
+  * [x] Ensure the Mary2Ish Dockerfile exposes the correct port (e.g., EXPOSE 8501\) that Traefik will use for routing.  
+  * [ ] Modify your local hosts file (e.g., /etc/hosts on Linux/macOS, C:\\Windows\\System32\\drivers\\etc\\hosts on Windows) to map 127.0.0.1 to the generated agent hostnames (e.g., mary.local, rick.local).  
   * [ ] Run generate\_agents.py with a list of agents, then docker-compose up \--build \-d.  
-  * [ ] Attempt to access http://agent-alpha.local, http://agent-beta.local, etc., in your browser. Verify that each URL correctly routes to its respective agent.  
+  * [ ] Attempt to access http://mary.local, http://rick.local, etc., in your browser. Verify that each URL correctly routes to its respective agent.  
   * [ ] **Self-Check:** Can all deployed agents be reached via their Traefik-defined hostnames? Is the routing correct for each?
 
 ### **Checkpoint 2.0: User Acceptance Testing (UAT) with User/PM**

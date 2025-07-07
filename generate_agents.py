@@ -189,7 +189,9 @@ class AgentGenerator:
             "labels": [
                 "traefik.enable=true",
                 f"traefik.http.routers.{service_name}.rule=Host(`{hostname}`)",
-                f"traefik.http.routers.{service_name}.entrypoints=web"
+                f"traefik.http.routers.{service_name}.entrypoints=web",
+                f"traefik.http.services.{service_name}.loadbalancer.server.port=8501",
+                f"traefik.docker.network=ai_agents_network"
             ],
             "healthcheck": {
                 "test": ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"],

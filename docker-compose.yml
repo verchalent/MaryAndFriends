@@ -18,6 +18,8 @@ services:
     - traefik.enable=true
     - traefik.http.routers.mary.rule=Host(`mary.local`)
     - traefik.http.routers.mary.entrypoints=web
+    - traefik.http.services.mary.loadbalancer.server.port=8501
+    - traefik.docker.network=ai_agents_network
     networks:
     - ai_agents_network
     volumes:
@@ -42,6 +44,8 @@ services:
     - traefik.enable=true
     - traefik.http.routers.rick.rule=Host(`rick.local`)
     - traefik.http.routers.rick.entrypoints=web
+    - traefik.http.services.rick.loadbalancer.server.port=8501
+    - traefik.docker.network=ai_agents_network
     networks:
     - ai_agents_network
     volumes:
@@ -60,7 +64,7 @@ services:
     networks:
     - ai_agents_network
     ports:
-    - 80:80
-    - 8080:8080
+    - 8080:80
+    - 8085:8080
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
