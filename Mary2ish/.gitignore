@@ -61,6 +61,7 @@ config/fastagent/fastagent.secrets.yaml
 .Trashes
 ehthumbs.db
 Thumbs.db
+.nfs*
 
 # Logs
 *.log
