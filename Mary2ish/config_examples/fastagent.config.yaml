@@ -16,7 +16,8 @@
 #default_model: sonnet                   # Anthropic Claude 3.5 Sonnet
 #default_model: gpt-4.1                  # OpenAI GPT-4
 #default_model: generic.llama3:8b        # Local Ollama model
-default_model: generic.qwen3:14b         # Default local model
+#default_model: generic.qwen3:14b        # Default local model
+default_model: generic.gemma3n:latest    # Default local model
 
 # Logging and Console Configuration:
 logger:
