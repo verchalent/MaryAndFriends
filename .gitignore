@@ -38,16 +38,10 @@ venv.bak/
 .env.staging
 
 # Secrets and API keys
-*secrets*
-*secret*
 *.key
 *.pem
 configs/*
 
-# Configuration with secrets
-config/fastagent/fastagent.secrets.yaml
-fastagent.secrets.yaml
-knowledge_facts.txt
 
 # IDEs
 .vscode/

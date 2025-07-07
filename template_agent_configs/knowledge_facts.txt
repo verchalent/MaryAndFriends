@@ -1,0 +1,27 @@
+# Agent Knowledge Facts - Template
+# Copy this file to configs/your_agent_name/knowledge_facts.txt and customize
+# 
+# Format: Each fact should be on its own line or separated by double newlines
+# Keep facts concise and relevant to your agent's domain of expertise.
+
+# Personal/Domain Knowledge (customize these examples)
+Your agent specializes in providing helpful assistance.
+This agent can access various tools and information sources.
+The agent is built using the FastAgent framework with Streamlit frontend.
+
+# Project-Specific Knowledge (add your own)
+This agent is part of the Mary2Ish AI agent collection.
+Each agent can be customized with unique knowledge and behavior.
+Agents communicate through a shared Docker network.
+
+# Useful Context (add relevant information for your use case)
+This agent can be reached through Traefik routing.
+Configuration can be updated by modifying the mounted config files.
+The agent supports various AI models including local Ollama instances.
+
+# Add more facts specific to your agent's role and domain below:
+# 
+# Example facts for different agent types:
+# - For a customer service agent: "Our support hours are 9 AM to 5 PM EST."
+# - For a technical agent: "The main database server runs PostgreSQL 15."
+# - For a sales agent: "Our premium plan includes unlimited features for $99/month."
