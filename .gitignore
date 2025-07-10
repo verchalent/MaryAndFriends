@@ -82,7 +82,8 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
-docker-compose.yml #should be generated now
+#docker - should be build now, not taken from repo
+docker-compose.yml 
 
 # Planning docs
 PLANNING.md
