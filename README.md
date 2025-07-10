@@ -6,6 +6,10 @@ A framework for deploying multiple AI agents using the Mary2Ish template, with D
 
 This project provides a standardized deployment framework for creating and managing multiple AI agents, each running in isolated Docker containers. All agents are based on the Mary2Ish template but can be customized through external configuration files.
 
+The project is still a work in progress. Agent config and deployed, but Treafik is not implimented yet.
+
+**This project makes use of AI coding assistants** it is as much a learning exercize for using various tools as it is for 
+
 ### Key Features
 
 - **Multi-Agent Deployment**: Deploy multiple AI agents simultaneously
