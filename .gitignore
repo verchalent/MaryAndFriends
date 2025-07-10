@@ -83,3 +83,7 @@ htmlcov/
 dmypy.json
 
 docker-compose.yml #should be generated now
+
+# Planning docs
+PLANNING.md
+TASK.md
