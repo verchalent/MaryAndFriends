@@ -68,6 +68,10 @@ The project is still a work in progress. Agent config and deployed, but Treafik 
 
    Your agent will be available at the port shown in the script output, typically: `http://localhost:8004`
 
+   ![Mary Agent Example](HelloMary.png)
+   
+   *Example: Mary agent running with custom configuration*
+
 ## Configuration Reference
 
 ### Agent Configuration Structure
