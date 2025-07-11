@@ -251,10 +251,6 @@ Each agent container includes health checks to ensure proper startup and ongoing
 
 Additional agents can be added at any time by running the script with new agent names. The system is designed to handle multiple concurrent agents efficiently.
 
-## Contributing
-
-Please see `TASK.md` for the current development roadmap and contributing guidelines.
-
 ## License
 
 See `LICENSE` file for licensing information.
