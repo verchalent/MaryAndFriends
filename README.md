@@ -1,25 +1,35 @@
-# AI Agent Collection Deployment
+# Multi-Agent Chat Deployment System
 
-A framework for deploying multiple AI agents using the Mary2Ish template, with Docker containerization, Traefik reverse proxy, and automated configuration management.
+A template and deployment mechanism for running multiple customizable chat agents with flexible LLM backends, configurable web interfaces, and Docker containerization.
 
 ## Project Overview
 
-This project provides a standardized deployment framework for creating and managing multiple AI agents, each running in isolated Docker containers. All agents are based on the Mary2Ish template but can be customized through external configuration files.
+This project provides a simple template and automation system for deploying multiple chat agents, each with their own web interface and configuration. The focus is on operational deployment rather than building an agent framework - it's designed to make it easy to spin up and manage multiple chat instances with different personalities, models, and configurations.
 
-The project is still a work in progress. Agent config and deployed, but Treafik is not implimented yet.
+The project is currently functional for basic multi-agent deployment, with several advanced features planned:
 
-**This project makes use of AI coding assistants** it is as much a learning exercize for using various tools as it is for 
+**Current Status:**
+
+- ✅ Template/mechanism to deploy multiple chat agents
+- ✅ LLM flexibility (local and hosted models)
+- ✅ Simple/configurable web front end per-agent
+- ✅ Dockerized deployment
+- 🚧 SSO capability (planned)
+- 🚧 Reverse proxy capability (planned)
+- 🚧 Memory/persistence (planned)
+
+**This project makes use of AI coding assistants** - it serves as both a practical deployment tool and an ongoing learning exercise for me using various development tools and patterns.
 
 ### Key Features
 
-- **Multi-Agent Deployment**: Deploy multiple AI agents simultaneously
-- **Template-Based**: All agents use the Mary2Ish framework as a foundation
+- **Multi-Chat Deployment**: Deploy multiple chat agents with unique configurations
+- **LLM Flexibility**: Support for various AI providers (Anthropic, OpenAI, local Ollama)
+- **Template-Based**: All agents use the Mary2Ish chat template as a foundation
 - **Configuration-Driven**: Customize each agent through external config files
 - **Automated Setup**: Script automatically creates configurations and Docker setup
-- **Containerized**: Each agent runs in its own Docker container
-- **Private Network**: All agents communicate on a dedicated Docker network
-- **Reverse Proxy**: Traefik handles routing and load balancing
-- **Easy Replication**: Simple process for creating new agents
+- **Containerized**: Each agent runs in its own Docker container with unique ports
+- **Web Interface**: Simple, configurable chat interface per agent
+- **Easy Replication**: Simple process for creating new chat instances
 
 ## Quick Start
 
@@ -29,7 +39,7 @@ The project is still a work in progress. Agent config and deployed, but Treafik 
 - Python 3.13+ with `uv` package manager
 - Basic understanding of YAML configuration files
 
-### Creating Your First Agent
+### Creating Your First Chat Agent
 
 1. **Generate Agent Configuration and Docker Setup**
 
@@ -43,20 +53,20 @@ The project is still a work in progress. Agent config and deployed, but Treafik 
    - Creates the `configs/my_agent_name/` directory
    - Copies all template configuration files
    - Generates/updates the `docker-compose.yml` file
-   - Assigns a unique port for your agent
+   - Assigns a unique port for your chat agent
    - Sets up proper networking and health checks
 
-2. **Customize Your Agent (Optional)**
+2. **Customize Your Chat Agent (Optional)**
 
    The script creates working defaults, but you can customize by editing files in `configs/my_agent_name/`:
 
-   - **`system_prompt.txt`**: Define your agent's personality and capabilities
+   - **`system_prompt.txt`**: Define your agent's personality and chat behavior
    - **`knowledge_facts.txt`**: Add agent-specific knowledge and facts
    - **`ui.config.yaml`**: Customize the chat interface and branding
    - **`fastagent.config.yaml`**: Configure AI model and logging settings
    - **`fastagent.secrets.yaml`**: Add your API keys (keep secure!)
 
-3. **Deploy Your Agent**
+3. **Deploy Your Chat Agent**
 
    Build and start your agent:
 
@@ -64,7 +74,7 @@ The project is still a work in progress. Agent config and deployed, but Treafik 
    docker-compose up --build -d
    ```
 
-4. **Access Your Agent**
+4. **Access Your Chat Agent**
 
    Your agent will be available at the port shown in the script output, typically: `http://localhost:8004`
 
@@ -74,16 +84,16 @@ The project is still a work in progress. Agent config and deployed, but Treafik 
 
 ## Configuration Reference
 
-### Agent Configuration Structure
+### Chat Agent Configuration Structure
 
-Each agent requires the following configuration files in its `configs/agent_name/` directory (automatically created by the script):
+Each chat agent requires the following configuration files in its `configs/agent_name/` directory (automatically created by the script):
 
 | File | Purpose | Required |
 |------|---------|----------|
 | `fastagent.config.yaml` | AI model, logging, MCP servers | Yes |
-| `ui.config.yaml` | UI customization and branding | Yes |
-| `system_prompt.txt` | Agent behavior and instructions | Yes |
-| `knowledge_facts.txt` | Agent-specific knowledge | Yes |
+| `ui.config.yaml` | Chat UI customization and branding | Yes |
+| `system_prompt.txt` | Chat agent behavior and personality | Yes |
+| `knowledge_facts.txt` | Agent-specific knowledge and facts | Yes |
 | `fastagent.secrets.yaml` | API keys and sensitive data | Yes |
 
 ### Key Configuration Options
@@ -129,12 +139,12 @@ Always try to resolve customer issues efficiently and escalate when necessary.
 
 **Note**: The `docker-compose.yml` file is automatically generated by the script and should not be manually edited or committed to version control.
 
-### Multiple Agents
+### Multiple Chat Agents
 
-To create multiple agents, run the script with multiple agent names:
+To create multiple chat agents, run the script with multiple agent names:
 
 ```bash
-# Generate configurations and Docker setup for multiple agents
+# Generate configurations and Docker setup for multiple chat agents
 uv run generate_agents.py support_agent sales_agent technical_agent
 ```
 
@@ -182,7 +192,7 @@ MaryAndFriends/
 ├── README.md                    # This file
 ├── PLANNING.md                  # Project architecture and goals
 ├── TASK.md                      # Development task list
-├── generate_agents.py           # Agent deployment automation script
+├── generate_agents.py           # Chat agent deployment automation script
 ├── docker-compose.yml           # Generated Docker configuration
 ├── template_agent_configs/      # Template configuration files
 │   ├── fastagent.config.yaml
@@ -190,10 +200,10 @@ MaryAndFriends/
 │   ├── system_prompt.txt
 │   ├── knowledge_facts.txt
 │   └── fastagent.secrets.yaml
-├── configs/                     # Agent-specific configurations (auto-generated)
-│   ├── agent_name_1/           # Individual agent configs
+├── configs/                     # Chat agent configurations (auto-generated)
+│   ├── agent_name_1/           # Individual chat agent configs
 │   └── agent_name_2/
-├── Mary2ish/                    # Base agent template
+├── Mary2ish/                    # Base chat agent template
 └── docs/                        # Project documentation
 ```
 
@@ -201,21 +211,21 @@ MaryAndFriends/
 
 ### Common Issues
 
-1. **Agent won't start**: Check that all required config files exist in `configs/agent_name/`
-2. **Can't access agent**: Ensure the port shown in the script output is available and not blocked
+1. **Chat agent won't start**: Check that all required config files exist in `configs/agent_name/`
+2. **Can't access chat interface**: Ensure the port shown in the script output is available and not blocked
 3. **API errors**: Verify API keys in `fastagent.secrets.yaml` are correct and valid
 4. **Port conflicts**: The script automatically assigns unique ports, but check if base ports are available
 5. **Script errors**: Ensure you have `uv` installed and the `template_agent_configs/` directory exists
 
 ### Logs and Debugging
 
-View agent logs:
+View chat agent logs:
 
 ```bash
 docker-compose logs agent_name
 ```
 
-View all running agents:
+View all running chat agents:
 
 ```bash
 docker-compose ps
@@ -249,7 +259,7 @@ Each agent container includes health checks to ensure proper startup and ongoing
 
 ### Scaling
 
-Additional agents can be added at any time by running the script with new agent names. The system is designed to handle multiple concurrent agents efficiently.
+Additional chat agents can be added at any time by running the script with new agent names. The system is designed to handle multiple concurrent chat agents efficiently.
 
 ## License
 
