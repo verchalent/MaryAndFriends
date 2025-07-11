@@ -40,28 +40,50 @@ def get_chat_styles() -> str:
     }
     
     /* === CHAT MESSAGE STYLING === */
-    .user-message {
+    /* Updated for container-based message structure */
+    .user-message, .assistant-message {
+        padding: 16px 20px;
+        border-radius: 16px;
+        margin: 12px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.5;
+        color: #2c3e50;
+    }
+    
+    /* Style containers that contain user messages */
+    .stContainer:has(.user-speaker) {
         background: linear-gradient(135deg, #afcde9 20%, #c8dae8 100%) !important;
         padding: 16px 20px;
         border-radius: 16px 16px 4px 16px;
         margin: 12px 0 12px 40px;
         border-left: 4px solid #5a9fd4;
         box-shadow: 0 2px 8px rgba(90, 159, 212, 0.15);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        line-height: 1.5;
-        color: #2c3e50;
     }
     
-    .assistant-message {
+    /* Style containers that contain assistant messages */
+    .stContainer:has(.assistant-speaker) {
         background: linear-gradient(135deg, #e6b3ff 20%, #d8e1da 100%) !important;
         padding: 16px 20px;
         border-radius: 16px 16px 16px 4px;
         margin: 12px 40px 12px 0;
         border-left: 4px solid #7cb342;
         box-shadow: 0 2px 8px rgba(124, 179, 66, 0.15);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        line-height: 1.5;
-        color: #2c3e50;
+    }
+    
+    /* Fallback for older browsers that don't support :has() */
+    .user-message {
+        background: linear-gradient(135deg, #afcde9 20%, #c8dae8 100%) !important;
+        border-left: 4px solid #5a9fd4;
+        margin-left: 40px;
+        border-radius: 16px 16px 4px 16px;
+    }
+    
+    .assistant-message {
+        background: linear-gradient(135deg, #e6b3ff 20%, #d8e1da 100%) !important;
+        border-left: 4px solid #7cb342;
+        margin-right: 40px;
+        border-radius: 16px 16px 16px 4px;
     }
     
     /* === SPEAKER NAME STYLING === */
@@ -147,6 +169,35 @@ def get_chat_styles() -> str:
         border-radius: 0 0 8px 8px;
         padding: 12px;
         margin-bottom: 8px;
+    }
+    
+    /* === CODE BLOCK STYLING === */
+    /* Style code blocks within chat messages */
+    .stCodeBlock {
+        margin: 8px 0 !important;
+        background: #f8f9fa !important;
+        border: 1px solid #e9ecef !important;
+        border-radius: 8px !important;
+    }
+    
+    .stCodeBlock > div {
+        background: #f8f9fa !important;
+        border-radius: 8px !important;
+    }
+    
+    .stCodeBlock code {
+        background: transparent !important;
+        color: #495057 !important;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+        font-size: 0.9em !important;
+        line-height: 1.4 !important;
+    }
+    
+    /* Ensure code blocks fit well in chat bubbles */
+    .stContainer .stCodeBlock {
+        margin: 12px 0;
+        max-width: 100%;
+        overflow-x: auto;
     }
     
     /* === SPINNER STYLING === */

@@ -88,3 +88,6 @@ docker-compose.yml
 # Planning docs
 PLANNING.md
 TASK.md
+
+# Test files
+test_files/

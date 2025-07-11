@@ -21,6 +21,7 @@ from app.utils.error_display import (
     display_info_message
 )
 from app.utils.response_processing import process_agent_response, process_markdown_to_html
+from app.utils.enhanced_markdown import render_enhanced_markdown
 from app.styles.chat_styles import get_chat_styles, get_iframe_resize_script
 
 logger = logging.getLogger(__name__)
@@ -75,15 +76,14 @@ def render_response_with_thinking(
         with st.expander("🔧 Show Server Data", expanded=False):
             st.code(mcp_data, language="text")
     
-    # Display main content with our custom styling and proper Markdown processing
-    content_html = process_markdown_to_html(content)
-    st.markdown(
-        f'''<div class="assistant-message">
-            <div class="speaker-name assistant-speaker">{agent_name}</div>
-            <div class="message-content">{content_html}</div>
-        </div>''',
-        unsafe_allow_html=True
-    )
+    # Create a container for the assistant message with custom styling
+    with st.container():
+        # Add CSS class for styling (we'll use markdown with custom CSS)
+        st.markdown(f'<div class="speaker-name assistant-speaker">{agent_name}</div>', 
+                   unsafe_allow_html=True)
+        
+        # Use enhanced markdown rendering for proper code block handling
+        render_enhanced_markdown(content)
 
 
 class ChatApp:
@@ -285,15 +285,14 @@ Please use this information naturally and appropriately in your responses, but d
             if message["role"] == "user":
                 # Get user display name from config
                 user_display_name = ui_config.get("chat", {}).get("user_display_name", "You")
-                # Display user message with custom styling and proper Markdown processing
-                content_html = process_markdown_to_html(message["content"])
-                st.markdown(
-                    f'''<div class="user-message">
-                        <div class="speaker-name user-speaker">{user_display_name}</div>
-                        <div class="message-content">{content_html}</div>
-                    </div>''',
-                    unsafe_allow_html=True
-                )
+                
+                # Create a container for the user message with custom styling
+                with st.container():
+                    st.markdown(f'<div class="speaker-name user-speaker">{user_display_name}</div>', 
+                               unsafe_allow_html=True)
+                    
+                    # Use enhanced markdown rendering for user messages too
+                    render_enhanced_markdown(message["content"])
             else:
                 # For assistant messages, check if we have thinking/mcp data
                 thinking = message.get("thinking")
