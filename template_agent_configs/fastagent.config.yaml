@@ -47,3 +47,41 @@ generic:
 #    example_server:
 #      transport: "http"
 #      url: "http://localhost:8000/mcp/"
+
+# Memory Persistence Configuration (optional)
+# Enables persistent conversation history across agent sessions
+memory:
+  # Enable/disable memory persistence for this agent
+  # When disabled, agent operates in stateless mode (default)
+  enabled: false
+  
+  # Storage path for persistent memory (within container)
+  # Maps to host ./data/{agent_name}/memory/ via Docker volume mount
+  storage_path: "./data/memory"
+  
+  # Memory operation mode:
+  #   - lightweight: JSON-only storage, no embeddings (recommended for Phase 1)
+  #   - local: Vector DB + knowledge graph with local embeddings
+  #   - online: Vector DB + knowledge graph with API embeddings
+  mode: "lightweight"
+  
+  # Maximum number of conversations to retain
+  # Older conversations are archived or deleted based on retention policy
+  max_conversations: 100
+  
+  # Number of days to retain conversation history
+  # Conversations older than this are automatically cleaned up
+  retention_days: 30
+  
+  # Include recent conversation context in system prompt
+  # When enabled, injects recent memory into each agent interaction
+  include_in_context: true
+
+# Example: Enable memory with custom settings
+# memory:
+#   enabled: true
+#   storage_path: "./data/memory"
+#   mode: "lightweight"
+#   max_conversations: 50
+#   retention_days: 14
+#   include_in_context: true

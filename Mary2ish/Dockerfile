@@ -59,7 +59,8 @@ COPY --chown=appuser:appuser config_examples/knowledge_facts.txt.example ./knowl
 COPY --chown=appuser:appuser config_examples/fastagent.secrets.yaml.example ./fastagent.secrets.yaml
 
 # Create directories for user cache
-RUN mkdir -p /home/appuser/.cache && \
+RUN mkdir -p /app/data/memory/conversations && \
+    mkdir -p /home/appuser/.cache && \
     chown -R appuser:appuser /app /home/appuser
 
 # Switch to non-root user
