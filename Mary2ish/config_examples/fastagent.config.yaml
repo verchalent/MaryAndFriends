@@ -51,10 +51,11 @@ generic:
 
 # Memory Persistence Configuration
 # Disabled by default - enable to persist conversations across sessions
+# See Mary2ish/README.md for detailed documentation of all memory options
 memory:
-  enabled: false
-  storage_path: "./data/memory"
-  mode: "lightweight"
-  max_conversations: 100
-  retention_days: 30
-  include_in_context: true
+  enabled: false                  # Enable/disable memory persistence
+  storage_path: "./data/memory"   # Path to store conversation JSON files
+  mode: "lightweight"             # Memory mode (NOTE: currently not implemented - always uses lightweight JSON storage)
+  max_conversations: 100          # Maximum number of conversations to retain
+  retention_days: 30              # Number of days to retain conversations
+  include_in_context: true        # Inject recent memory into agent context
