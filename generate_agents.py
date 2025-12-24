@@ -248,10 +248,12 @@ class AgentGenerator:
         except Exception:
             pass
         
-        # Ensure host memory directory
-        host_mem_dir = self._ensure_agent_memory_dir(agent_name)
+        # Ensure host memory directory (creates ./data/{agent_name}/memory/)
+        self._ensure_agent_memory_dir(agent_name)
         # Determine container memory path from config
         container_mem_path = self._read_memory_storage_path(agent_name)
+        # Use relative path for volume mount (consistent with other volumes)
+        host_mem_dir_rel = f"./data/{agent_name}/memory"
 
         return {
             "build": "./Mary2ish",
@@ -265,7 +267,7 @@ class AgentGenerator:
                 f"./configs/{agent_name}/knowledge_facts.txt:/app/knowledge_facts.txt",
                 f"./configs/{agent_name}/fastagent.secrets.yaml:/app/fastagent.secrets.yaml",
                 # Per-agent persistent memory volume
-                f"{host_mem_dir}:{container_mem_path}"
+                f"{host_mem_dir_rel}:{container_mem_path}"
             ],
             "networks": [
                 "ai_agents_network"
