@@ -71,7 +71,7 @@ The project is currently functional for basic multi-agent deployment, with sever
    Build and start your agent:
 
    ```bash
-   docker-compose up --build -d
+   docker compose up --build -d
    ```
 
 4. **Access Your Chat Agent**
@@ -222,13 +222,13 @@ MaryAndFriends/
 View chat agent logs:
 
 ```bash
-docker-compose logs agent_name
+docker compose logs agent_name
 ```
 
 View all running chat agents:
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ## Manual Configuration (Advanced)
