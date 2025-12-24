@@ -41,9 +41,11 @@ class AgentGenerator:
         self.configs_dir = self.project_root / "configs"
         self.docker_compose_file = self.project_root / "docker-compose.yml"
         self.mary2ish_dir = self.project_root / "Mary2ish"
+        self.data_dir = self.project_root / "data"
         
         # Ensure required directories exist
         self.configs_dir.mkdir(exist_ok=True)
+        self.data_dir.mkdir(exist_ok=True)
         
     def validate_environment(self) -> bool:
         """Validate that the required files and directories exist.
@@ -125,6 +127,47 @@ class AgentGenerator:
         except Exception as e:
             logger.error(f"❌ Failed to create agent config for {agent_name}: {e}")
             return False
+
+    def _read_memory_storage_path(self, agent_name: str) -> str:
+        """Read memory.storage_path from the agent's fastagent.config.yaml.
+
+        Returns container path for the memory directory. Defaults to '/app/data/memory'.
+        """
+        try:
+            config_path = self.configs_dir / agent_name / "fastagent.config.yaml"
+            default_rel = "./data/memory"
+            default_container = "/app/data/memory"
+            if not config_path.exists():
+                return default_container
+
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f) or {}
+            memory_cfg = (config or {}).get("memory", {})
+            storage_path = memory_cfg.get("storage_path", default_rel)
+
+            # Map relative './...' paths to container '/app/...'
+            if isinstance(storage_path, str) and storage_path.startswith("./"):
+                # remove leading './'
+                rel = storage_path[2:]
+                return f"/app/{rel}"
+            # If already absolute inside container, use as-is
+            if isinstance(storage_path, str) and storage_path.startswith("/"):
+                return storage_path
+            # Fallback
+            return default_container
+        except Exception as e:
+            logger.warning(f"Couldn't read memory.storage_path for {agent_name}: {e}")
+            return "/app/data/memory"
+
+    def _ensure_agent_memory_dir(self, agent_name: str) -> Path:
+        """Create host memory directory for the agent: ./data/{agent_name}/memory/"""
+        path = self.data_dir / agent_name / "memory"
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Ensured memory dir: {path}")
+        except Exception as e:
+            logger.warning(f"Failed to create memory dir {path}: {e}")
+        return path
     
     def get_base_docker_compose(self) -> Dict[str, Any]:
         """Get the base docker-compose configuration.
@@ -190,6 +233,11 @@ class AgentGenerator:
         existing_agents = existing_agents or []
         port = self.get_next_available_port(existing_agents)
         
+        # Ensure host memory directory
+        host_mem_dir = self._ensure_agent_memory_dir(agent_name)
+        # Determine container memory path from config
+        container_mem_path = self._read_memory_storage_path(agent_name)
+
         return {
             "build": "./Mary2ish",
             "ports": [
@@ -200,7 +248,9 @@ class AgentGenerator:
                 f"./configs/{agent_name}/ui.config.yaml:/app/ui.config.yaml",
                 f"./configs/{agent_name}/system_prompt.txt:/app/system_prompt.txt",
                 f"./configs/{agent_name}/knowledge_facts.txt:/app/knowledge_facts.txt",
-                f"./configs/{agent_name}/fastagent.secrets.yaml:/app/fastagent.secrets.yaml"
+                f"./configs/{agent_name}/fastagent.secrets.yaml:/app/fastagent.secrets.yaml",
+                # Per-agent persistent memory volume
+                f"{host_mem_dir}:{container_mem_path}"
             ],
             "networks": [
                 "ai_agents_network"
