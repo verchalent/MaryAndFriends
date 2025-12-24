@@ -14,9 +14,9 @@ The project is currently functional for basic multi-agent deployment, with sever
 - ✅ LLM flexibility (local and hosted models)
 - ✅ Simple/configurable web front end per-agent
 - ✅ Dockerized deployment
+- ✅ Memory/persistence with per-agent storage
 - 🚧 SSO capability (planned)
 - 🚧 Reverse proxy capability (planned)
-- 🚧 Memory/persistence (planned)
 
 **This project makes use of AI coding assistants** - it serves as both a practical deployment tool and an ongoing learning exercise for me using various development tools and patterns.
 
@@ -24,6 +24,7 @@ The project is currently functional for basic multi-agent deployment, with sever
 
 - **Multi-Chat Deployment**: Deploy multiple chat agents with unique configurations
 - **LLM Flexibility**: Support for various AI providers (Anthropic, OpenAI, local Ollama)
+- **Optional Persistent Memory**: Each agent can optionally maintain conversation history and context across sessions
 - **Template-Based**: All agents use the Mary2Ish chat template as a foundation
 - **Configuration-Driven**: Customize each agent through external config files
 - **Automated Setup**: Script automatically creates configurations and Docker setup
@@ -52,8 +53,9 @@ The project is currently functional for basic multi-agent deployment, with sever
    This command automatically:
    - Creates the `configs/my_agent_name/` directory
    - Copies all template configuration files
+   - Creates the `data/my_agent_name/memory/` directory for persistent storage
    - Generates/updates the `docker-compose.yml` file
-   - Assigns a unique port for your chat agent
+   - Assigns a unique port for your chat agent (starting from 8004)
    - Sets up proper networking and health checks
 
 2. **Customize Your Chat Agent (Optional)**
@@ -106,6 +108,30 @@ default_model: anthropic.claude-3-5-sonnet-20241022  # Anthropic Claude
 # default_model: openai.gpt-4o                        # OpenAI GPT-4
 # default_model: generic.llama3:8b                    # Local Ollama
 ```
+
+#### Memory Configuration (`fastagent.config.yaml`) - Optional
+
+Memory is **optional** and can be enabled/disabled per agent. When enabled, agents maintain conversation history across sessions:
+
+```yaml
+memory:
+  enabled: true                    # Set to false to disable memory persistence
+  storage_path: "./data/memory"    # Container path for memory storage
+  max_history: 100                 # Maximum number of conversation turns to retain
+```
+
+**Memory Storage (when enabled):**
+- Each agent's memory is stored in `./data/{agent_name}/memory/` on the host
+- Memory is automatically mounted as a Docker volume
+- Conversations persist across container restarts
+- Each agent has isolated memory storage
+
+**Memory Features:**
+- **Optional**: Can be enabled or disabled per agent
+- Maintains conversation context across sessions (when enabled)
+- Configurable history limits
+- Automatic cleanup of old conversations
+- Per-agent isolation for security and privacy
 
 #### UI Customization (`ui.config.yaml`)
 
@@ -160,12 +186,13 @@ This automatically:
 
 The `generate_agents.py` script provides comprehensive automation:
 
-- **Intelligent Directory Creation**: Creates `configs/agent_name/` directories as needed
+- **Intelligent Directory Creation**: Creates `configs/agent_name/` and `data/agent_name/memory/` directories as needed
 - **Template Copying**: Copies all template files to each agent directory
 - **Preservation of Customizations**: Never overwrites existing configuration files
-- **Docker Compose Generation**: Creates or updates complete Docker configuration
+- **Memory Volume Setup**: Automatically configures persistent memory storage for each agent
+- **Docker Compose Generation**: Creates or updates complete Docker configuration (without deprecated version tag)
 - **Network Setup**: Configures Docker networking automatically
-- **Port Management**: Automatically assigns unique ports (starting from 8004)
+- **Port Management**: Automatically assigns unique sequential ports (starting from 8004)
 - **Health Checks**: Adds health monitoring for each agent container
 - **Validation**: Sanitizes agent names and validates environment
 
@@ -203,6 +230,11 @@ MaryAndFriends/
 ├── configs/                     # Chat agent configurations (auto-generated)
 │   ├── agent_name_1/           # Individual chat agent configs
 │   └── agent_name_2/
+├── data/                        # Agent persistent data (auto-generated)
+│   ├── agent_name_1/           # Per-agent data storage
+│   │   └── memory/             # Conversation history and memory
+│   └── agent_name_2/
+│       └── memory/
 ├── Mary2ish/                    # Base chat agent template
 └── docs/                        # Project documentation
 ```
@@ -214,8 +246,9 @@ MaryAndFriends/
 1. **Chat agent won't start**: Check that all required config files exist in `configs/agent_name/`
 2. **Can't access chat interface**: Ensure the port shown in the script output is available and not blocked
 3. **API errors**: Verify API keys in `fastagent.secrets.yaml` are correct and valid
-4. **Port conflicts**: The script automatically assigns unique ports, but check if base ports are available
-5. **Script errors**: Ensure you have `uv` installed and the `template_agent_configs/` directory exists
+4. **Port conflicts**: The script automatically assigns unique sequential ports starting from 8004
+5. **Memory not persisting**: Verify `data/agent_name/memory/` directory exists and has proper permissions
+6. **Script errors**: Ensure you have `uv` installed and the `template_agent_configs/` directory exists
 
 ### Logs and Debugging
 
