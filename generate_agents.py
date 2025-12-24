@@ -179,7 +179,6 @@ class AgentGenerator:
             Base docker-compose configuration dictionary
         """
         return {
-            "version": "3.8",
             "services": {},
             "networks": {
                 "ai_agents_network": {
@@ -312,7 +311,6 @@ class AgentGenerator:
             for agent_name in agent_names:
                 service_config = self.generate_agent_service(agent_name, existing_agents)
                 compose_config["services"][agent_name] = service_config
-                existing_agents.append(agent_name)  # Update list for next agent
                 logger.info(f"Added/updated service: {agent_name}")
             
             # Write updated docker-compose.yml
