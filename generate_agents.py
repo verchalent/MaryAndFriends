@@ -42,6 +42,9 @@ class AgentGenerator:
         self.docker_compose_file = self.project_root / "docker-compose.yml"
         self.mary2ish_dir = self.project_root / "Mary2ish"
         self.data_dir = self.project_root / "data"
+        # Track used ports within a single generation run to avoid duplicates
+        self._used_ports_cache: List[int] | None = None
+        self._assigned_ports: set[int] = set()
         
         # Ensure required directories exist
         self.configs_dir.mkdir(exist_ok=True)
@@ -195,26 +198,34 @@ class AgentGenerator:
             Next available port starting from 8004
         """
         base_port = 8004
-        used_ports = []
-        
-        # Load existing docker-compose to check used ports
-        if self.docker_compose_file.exists():
-            with open(self.docker_compose_file, 'r') as f:
-                compose_config = yaml.safe_load(f) or {}
-                
-            services = compose_config.get('services', {})
-            for service_name, service_config in services.items():
-                ports = service_config.get('ports', [])
-                for port_mapping in ports:
-                    if isinstance(port_mapping, str):
-                        host_port = int(port_mapping.split(':')[0])
-                        used_ports.append(host_port)
-        
+        # Lazy-load used ports from compose once
+        if self._used_ports_cache is None:
+            used_ports: List[int] = []
+            if self.docker_compose_file.exists():
+                try:
+                    with open(self.docker_compose_file, 'r') as f:
+                        compose_config = yaml.safe_load(f) or {}
+                    services = compose_config.get('services', {})
+                    for _, service_config in services.items():
+                        for port_mapping in service_config.get('ports', []) or []:
+                            if isinstance(port_mapping, str) and ':' in port_mapping:
+                                try:
+                                    host_port = int(port_mapping.split(':')[0])
+                                    used_ports.append(host_port)
+                                except Exception:
+                                    continue
+                except Exception as e:
+                    logger.debug(f"Unable to parse existing ports from compose: {e}")
+            self._used_ports_cache = used_ports
+
+        # Combine persisted used ports with ports assigned in this run
+        occupied = set(self._used_ports_cache or []) | set(self._assigned_ports)
+
         # Find next available port
         current_port = base_port
-        while current_port in used_ports:
+        while current_port in occupied:
             current_port += 1
-            
+
         return current_port
 
     def generate_agent_service(self, agent_name: str, existing_agents: List[str] = None) -> Dict[str, Any]:
@@ -232,6 +243,11 @@ class AgentGenerator:
         # Calculate the port for this agent
         existing_agents = existing_agents or []
         port = self.get_next_available_port(existing_agents)
+        # Remember this assignment to prevent duplicates during this run
+        try:
+            self._assigned_ports.add(port)
+        except Exception:
+            pass
         
         # Ensure host memory directory
         host_mem_dir = self._ensure_agent_memory_dir(agent_name)

@@ -11,8 +11,8 @@ import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from mcp_agent.core.fastagent import FastAgent
-from mcp_agent.core.prompt import Prompt
+from fast_agent.core.fastagent import FastAgent
+from fast_agent.core.prompt import Prompt
 
 from app.utils.error_display import (
     display_agent_error,

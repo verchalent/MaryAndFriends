@@ -50,7 +50,7 @@ def setup_logging(
     
     # Set specific loggers to appropriate levels
     logging.getLogger("app").setLevel(log_level)
-    logging.getLogger("mcp_agent").setLevel(logging.WARNING)  # Reduce MCP noise
+    logging.getLogger("fast_agent").setLevel(logging.WARNING)  # Reduce agent noise
     logging.getLogger("httpx").setLevel(logging.WARNING)      # Reduce HTTP noise
     logging.getLogger("streamlit").setLevel(logging.WARNING)  # Reduce Streamlit noise
 

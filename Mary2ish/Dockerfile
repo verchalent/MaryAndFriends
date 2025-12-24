@@ -82,5 +82,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
-# Entry point to run the Streamlit application
-CMD ["uv", "run", "streamlit", "run", "main.py"]
+# Entry point to run the Streamlit application using the prebuilt venv
+# Reason: Ensure imports (e.g., mcp_agent) resolve from /app/.venv without uv creating a separate env
+CMD ["streamlit", "run", "main.py"]
