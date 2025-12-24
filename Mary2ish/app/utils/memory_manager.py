@@ -61,7 +61,28 @@ class MemoryManager:
         try:
             conversations_dir = self.storage_path / "conversations"
             conversations_dir.mkdir(parents=True, exist_ok=True)
-            logger.debug(f"Memory storage initialized at: {conversations_dir}")
+            
+            # Test write permissions by creating a test file
+            test_file = conversations_dir / ".write_test"
+            try:
+                test_file.write_text("test")
+                test_file.unlink()
+                logger.debug(f"Memory storage initialized at: {conversations_dir}")
+            except PermissionError:
+                logger.error(
+                    f"Permission denied writing to memory storage: {conversations_dir}. "
+                    f"If using Docker, ensure the host directory is owned by UID 1000 or set to 777 permissions. "
+                    f"Run: chmod -R 777 ./data/*/memory or chown -R 1000:1000 ./data/*/memory"
+                )
+                self.enabled = False
+                
+        except PermissionError as e:
+            logger.error(
+                f"Permission denied creating memory storage at {self.storage_path}: {e}. "
+                f"If using Docker, ensure the host directory exists and is writable by UID 1000. "
+                f"Run: mkdir -p ./data/*/memory && chown -R 1000:1000 ./data/*/memory"
+            )
+            self.enabled = False
         except Exception as e:
             logger.error(f"Failed to initialize memory storage: {e}")
             self.enabled = False  # Disable if we can't create storage

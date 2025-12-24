@@ -126,6 +126,23 @@ memory:
 - Conversations persist across container restarts
 - Each agent has isolated memory storage
 
+**Memory Permissions (Docker):**
+The container runs as UID 1000 (`appuser`). For memory to work correctly:
+
+```bash
+# Option 1: Set ownership to UID 1000 (recommended)
+chown -R 1000:1000 ./data/agent_name/memory
+chmod -R 755 ./data/agent_name/memory
+
+# Option 2: Permissive mode (less secure but works with any UID)
+chmod -R 777 ./data/agent_name/memory
+```
+
+If you see "Permission denied" errors in logs, fix permissions and restart:
+```bash
+docker compose restart agent_name
+```
+
 **Memory Features:**
 - **Optional**: Can be enabled or disabled per agent
 - Maintains conversation context across sessions (when enabled)
@@ -247,8 +264,9 @@ MaryAndFriends/
 2. **Can't access chat interface**: Ensure the port shown in the script output is available and not blocked
 3. **API errors**: Verify API keys in `fastagent.secrets.yaml` are correct and valid
 4. **Port conflicts**: The script automatically assigns unique sequential ports starting from 8004
-5. **Memory not persisting**: Verify `data/agent_name/memory/` directory exists and has proper permissions
-6. **Script errors**: Ensure you have `uv` installed and the `template_agent_configs/` directory exists
+5. **Memory not persisting**: Check directory permissions - see Memory Permissions section above
+6. **Permission denied errors**: Container runs as UID 1000, ensure host directories are accessible
+7. **Script errors**: Ensure you have `uv` installed and the `template_agent_configs/` directory exists
 
 ### Logs and Debugging
 

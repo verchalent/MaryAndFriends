@@ -32,8 +32,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Create non-root user for security with UID/GID 1000 (matches common host user)
+# This ensures proper permissions for mounted volumes
+RUN groupadd -g 1000 appuser && useradd -u 1000 -g appuser -m appuser
 
 # Set working directory
 WORKDIR /app
@@ -58,10 +59,12 @@ COPY --chown=appuser:appuser config_examples/ui.config.yaml ./ui.config.yaml
 COPY --chown=appuser:appuser config_examples/knowledge_facts.txt.example ./knowledge_facts.txt
 COPY --chown=appuser:appuser config_examples/fastagent.secrets.yaml.example ./fastagent.secrets.yaml
 
-# Create directories for user cache
+# Create directories for user cache and data
+# Set permissive permissions for data directory to handle volume mounts
 RUN mkdir -p /app/data/memory/conversations && \
     mkdir -p /home/appuser/.cache && \
-    chown -R appuser:appuser /app /home/appuser
+    chown -R appuser:appuser /app /home/appuser && \
+    chmod -R 755 /app/data
 
 # Switch to non-root user
 USER appuser

@@ -73,6 +73,36 @@ Conversations are stored as JSON files with this structure:
 }
 ```
 
+#### Docker Volume Permissions
+
+When running in Docker, the container runs as UID 1000 (user `appuser`). To ensure proper permissions:
+
+**Option 1: Recommended - Match UID ownership**
+```bash
+# Create and set ownership to UID 1000
+mkdir -p ./data/memory/conversations
+chown -R 1000:1000 ./data/memory
+chmod -R 755 ./data/memory
+```
+
+**Option 2: Permissive (less secure but always works)**
+```bash
+# Allow all users to write
+mkdir -p ./data/memory/conversations
+chmod -R 777 ./data/memory
+```
+
+**Verify permissions:**
+```bash
+# Check ownership and permissions
+ls -la ./data/memory/
+
+# Check container logs for memory initialization
+docker logs <container_name> 2>&1 | grep -i memory
+```
+
+If you see "Permission denied" errors in the logs, the container cannot write to the mounted volume. Fix with one of the options above and restart the container.
+
 #### Important Notes
 
 - **The `mode` configuration is currently not functional** - all memory operations use the same lightweight JSON file storage regardless of the mode value
