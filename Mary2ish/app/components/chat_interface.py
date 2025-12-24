@@ -22,6 +22,7 @@ from app.utils.error_display import (
 )
 from app.utils.response_processing import process_agent_response, process_markdown_to_html
 from app.utils.enhanced_markdown import render_enhanced_markdown
+from app.utils.memory_manager import MemoryManager, load_memory_config
 from app.styles.chat_styles import get_chat_styles, get_iframe_resize_script
 
 logger = logging.getLogger(__name__)
@@ -94,6 +95,10 @@ class ChatApp:
         self.fast_agent: Optional[FastAgent] = None
         self.agent_app = None
         self.is_initialized = False
+        
+        # Initialize memory manager
+        memory_config = load_memory_config()
+        self.memory_manager = MemoryManager(**memory_config)
         
         # Initialize session state
         if "messages" not in st.session_state:
@@ -196,7 +201,7 @@ class ChatApp:
                 logger.info("Knowledge facts file contains only examples - using base system prompt")
                 return base_prompt
                 
-            # Create enhanced prompt
+            # Create enhanced prompt with knowledge facts
             enhanced_prompt = f"""{base_prompt}
 
 PERSONAL KNOWLEDGE:
@@ -206,7 +211,18 @@ The following are specific facts about the user and context that you should inco
 
 Please use this information naturally and appropriately in your responses, but don't be overly obvious about it. Be helpful and personal while maintaining your character."""
             
-            logger.info("Enhanced system prompt with knowledge facts")
+            # Add memory context if enabled
+            memory_context = self.memory_manager.get_recent_context(max_messages=5)
+            if memory_context:
+                enhanced_prompt = f"""{enhanced_prompt}
+
+---
+
+{memory_context}"""
+                logger.info("Enhanced system prompt with knowledge facts and memory context")
+            else:
+                logger.info("Enhanced system prompt with knowledge facts")
+            
             return enhanced_prompt
             
         except Exception as e:
@@ -321,6 +337,19 @@ Please use this information naturally and appropriately in your responses, but d
                     
                     # Process all content types from response
                     clean_response, thinking, mcp_data = process_agent_response(raw_response)
+                    
+                    # Save message pair to persistent memory
+                    metadata = {}
+                    if thinking:
+                        metadata["thinking"] = thinking
+                    if mcp_data:
+                        metadata["mcp_data"] = mcp_data
+                    
+                    self.memory_manager.save_message_pair(
+                        user_message=prompt,
+                        assistant_message=clean_response,
+                        metadata=metadata if metadata else None
+                    )
                     
                     # Add assistant response to session state with separated content
                     message_data = {

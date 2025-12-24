@@ -47,3 +47,14 @@ generic:
 #    example_server:
 #      transport: "http"
 #      url: "http://localhost:8000/mcp/"
+
+
+# Memory Persistence Configuration
+# Disabled by default - enable to persist conversations across sessions
+memory:
+  enabled: false
+  storage_path: "./data/memory"
+  mode: "lightweight"
+  max_conversations: 100
+  retention_days: 30
+  include_in_context: true
