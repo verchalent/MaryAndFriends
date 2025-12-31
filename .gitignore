@@ -43,6 +43,7 @@ venv.bak/
 *.pem
 configs/*
 Mary2ish/config/*
+data/*
 
 
 # IDEs
