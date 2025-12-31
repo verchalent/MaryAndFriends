@@ -40,6 +40,60 @@ generic:
   api_key: "ollama"  # Default for Ollama
   base_url: "http://localhost:11434/v1"  # Default Ollama endpoint
 
+# Memory Configuration (MemLayer Integration)
+# Memory is DISABLED by default for backward compatibility
+memory:
+  # Enable/disable memory for this agent
+  enabled: false
+  
+  # Storage backend provider
+  # Options: "local" (file-based), "online" (API-based embeddings), "lightweight" (keyword-based, no vector storage)
+  # - LOCAL: Uses sentence-transformers ML model locally (~10s startup, free, high accuracy)
+  # - ONLINE: Uses API embeddings like OpenAI (~2s startup, ~$0.0001/op, high accuracy) 
+  # - LIGHTWEIGHT: Keyword-based filtering (<1s startup, free, medium accuracy, graph-only storage)
+  provider: "local"
+  
+  # Storage path for memory data (local file-based storage)
+  # This path will be mounted as a Docker volume for persistence
+  storage_path: "./data/memory"
+  
+  # User ID for memory isolation (optional, defaults to "default_user")
+  # In multi-user scenarios, set this dynamically per user
+  user_id: "default_user"
+  
+  # Time-to-live for memories in seconds (optional)
+  # If set, memories older than this will expire
+  # Leave unset or 0 for no expiration
+  ttl: 0
+  
+  # Maximum number of conversations to retain
+  # Older conversations will be archived/deleted
+  max_conversations: 100
+  
+  # Enable semantic search using vector embeddings
+  # Retrieves relevant memories based on semantic similarity, not just recency
+  # Requires vector storage (local or online mode)
+  semantic_search: false
+  
+  # Search tier for memory retrieval
+  # Options: "fast" (<100ms, 2 results), "balanced" (<500ms, 5 results, default), "deep" (<2s, 10 results + graph traversal)
+  search_tier: "balanced"
+  
+  # Include retrieved memories in context window
+  # If true, relevant memories are automatically injected into the agent's prompt
+  include_in_context: true
+  
+  # Salience threshold for memory filtering (-1.0 to 1.0)
+  # Controls what gets saved to memory:
+  # -0.1: Permissive (saves more, including casual chat)
+  #  0.0: Balanced (default, saves important facts and preferences)
+  #  0.1: Strict (saves only very important information)
+  salience_threshold: 0.0
+  
+  # Enable proactive task reminders
+  # Agent will automatically remind about scheduled tasks when due
+  task_reminders: false
+
 # Optional: MCP Server Configuration
 # Uncomment and configure as needed
 #mcp:
