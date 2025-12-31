@@ -10,19 +10,21 @@ import streamlit as st
 import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from mcp_agent.core.fastagent import FastAgent
 from mcp_agent.core.prompt import Prompt
 
-from app.utils.error_display import (
+from ..utils.error_display import (
     display_agent_error,
     display_configuration_error,
     display_warning_message,
     display_info_message
 )
-from app.utils.response_processing import process_agent_response, process_markdown_to_html
-from app.utils.enhanced_markdown import render_enhanced_markdown
-from app.styles.chat_styles import get_chat_styles, get_iframe_resize_script
+from ..utils.response_processing import process_agent_response, process_markdown_to_html
+from ..utils.enhanced_markdown import render_enhanced_markdown
+from ..utils.memlayer_adapter import MemLayerAdapter, MemoryConfig
+from ..styles.chat_styles import get_chat_styles, get_iframe_resize_script
 
 logger = logging.getLogger(__name__)
 
@@ -94,12 +96,70 @@ class ChatApp:
         self.fast_agent: Optional[FastAgent] = None
         self.agent_app = None
         self.is_initialized = False
+        self.memory_adapter: Optional[MemLayerAdapter] = None
         
         # Initialize session state
         if "messages" not in st.session_state:
             st.session_state.messages = []
         if "agent_initialized" not in st.session_state:
             st.session_state.agent_initialized = False
+        if "session_id" not in st.session_state:
+            # Create unique session ID for memory isolation
+            st.session_state.session_id = str(uuid4())
+        
+        # Initialize memory adapter
+        self._initialize_memory()
+    
+    def _initialize_memory(self) -> None:
+        """
+        Initialize the MemLayer adapter from configuration.
+        
+        This loads memory configuration from fastagent.config.yaml and
+        initializes the MemLayerAdapter. If memory is disabled or
+        initialization fails, the adapter will operate in no-op mode.
+        """
+        try:
+            config_file = Path("fastagent.config.yaml")
+            if not config_file.exists():
+                logger.debug("No fastagent.config.yaml found - memory initialization skipped")
+                return
+            
+            # Load memory configuration from fastagent.config.yaml
+            with open(config_file, 'r') as f:
+                config_data = yaml.safe_load(f) or {}
+            
+            memory_config_dict = config_data.get("memory", {})
+            
+            # Create MemoryConfig from loaded settings
+            memory_config = MemoryConfig(
+                enabled=memory_config_dict.get("enabled", False),
+                provider=memory_config_dict.get("provider", "local"),
+                storage_path=memory_config_dict.get("storage_path", "./data/memory"),
+                user_id=memory_config_dict.get("user_id", "default_user"),
+                ttl=memory_config_dict.get("ttl", 0),
+                max_conversations=memory_config_dict.get("max_conversations", 100),
+                semantic_search=memory_config_dict.get("semantic_search", False),
+                search_tier=memory_config_dict.get("search_tier", "balanced"),
+                include_in_context=memory_config_dict.get("include_in_context", True),
+                salience_threshold=memory_config_dict.get("salience_threshold", 0.0),
+                task_reminders=memory_config_dict.get("task_reminders", False)
+            )
+            
+            # Initialize the adapter
+            self.memory_adapter = MemLayerAdapter(memory_config)
+            
+            if memory_config.enabled:
+                if self.memory_adapter.is_initialized:
+                    logger.info(f"MemLayer initialized: {self.memory_adapter}")
+                else:
+                    logger.warning(f"MemLayer failed to initialize: {self.memory_adapter.initialization_error}")
+            else:
+                logger.info("Memory is disabled - operating in no-op mode")
+        
+        except Exception as e:
+            logger.error(f"Error initializing memory adapter: {e}")
+            # Create a no-op adapter
+            self.memory_adapter = MemLayerAdapter(MemoryConfig(enabled=False))
     
     async def initialize_agent(self) -> bool:
         """
@@ -217,6 +277,12 @@ Please use this information naturally and appropriately in your responses, but d
         """
         Send a message to the agent and get response.
         
+        This method implements the full memory integration workflow:
+        1. Pre-processing: Retrieve relevant memory context
+        2. Enrich the message with retrieved memory context
+        3. Send the enriched message to the agent
+        4. Post-processing: Store the interaction in memory
+        
         Args:
             message: User message to send
             
@@ -230,14 +296,96 @@ Please use this information naturally and appropriately in your responses, but d
             if not self.agent_app:
                 raise Exception("Agent not properly initialized")
             
-            # Send message to agent
-            response = await self.agent_app.send(message)
+            # PRE-PROCESSING: Retrieve memory context if enabled
+            enriched_message = message
+            memory_context = ""
+            
+            if self.memory_adapter and self.memory_adapter.config.enabled:
+                try:
+                    # Get relevant context from memory
+                    context_items = self.memory_adapter.get_context(
+                        query=message,
+                        session_id=st.session_state.session_id,
+                        max_results=5
+                    )
+                    
+                    if context_items and self.memory_adapter.config.include_in_context:
+                        # Format context for inclusion in prompt
+                        memory_context = self._format_memory_context(context_items)
+                        enriched_message = f"{memory_context}\n\nUser Message:\n{message}"
+                        logger.debug(f"Enriched message with {len(context_items)} memory items")
+                except Exception as e:
+                    logger.warning(f"Failed to retrieve memory context: {e}")
+                    # Continue without memory context
+            
+            # Send message to agent (enriched with memory context if available)
+            response = await self.agent_app.send(enriched_message)
+            
+            # POST-PROCESSING: Store the interaction in memory if enabled
+            if self.memory_adapter and self.memory_adapter.config.enabled:
+                try:
+                    # Store the interaction for future retrieval
+                    stored = self.memory_adapter.store_interaction(
+                        user_message=message,  # Store original message, not enriched
+                        assistant_message=response,
+                        session_id=st.session_state.session_id,
+                        metadata={
+                            "timestamp": str(Path(".").absolute()),
+                            "had_memory_context": bool(memory_context)
+                        }
+                    )
+                    
+                    if stored:
+                        logger.debug("Interaction stored in memory")
+                    else:
+                        logger.debug("Interaction filtered by salience gate")
+                
+                except Exception as e:
+                    logger.warning(f"Failed to store interaction in memory: {e}")
+                    # Continue even if storage fails
+            
             return response
             
         except Exception as e:
             error_msg = f"Error sending message: {e}"
             logger.error(error_msg)
             return f"Sorry, I encountered an error: {e}"
+    
+    def _format_memory_context(self, context_items: List[Dict[str, Any]]) -> str:
+        """
+        Format memory context items for inclusion in the prompt.
+        
+        Args:
+            context_items: List of memory items returned from get_context()
+            
+        Returns:
+            Formatted string for inclusion in prompt
+        """
+        if not context_items:
+            return ""
+        
+        formatted_lines = ["--- RELEVANT PAST CONTEXT ---"]
+        
+        for i, item in enumerate(context_items, 1):
+            text = item.get("text", "")
+            relevance = item.get("relevance_score", 0.0)
+            
+            # Include relevance score if available
+            if relevance:
+                formatted_lines.append(f"[{i}] (relevance: {relevance:.2f})")
+            else:
+                formatted_lines.append(f"[{i}]")
+            
+            # Truncate long text to avoid prompt explosion
+            if len(text) > 300:
+                text = text[:300] + "..."
+            
+            formatted_lines.append(text)
+            formatted_lines.append("")  # Blank line for readability
+        
+        formatted_lines.append("--- END CONTEXT ---")
+        return "\n".join(formatted_lines)
+
     
     async def _test_mcp_connectivity(self, mcp_servers: List[str]) -> None:
         """
